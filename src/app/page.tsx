@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { getServerSession } from 'next-auth/next';
 import Link from 'next/link';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 async function getLeaderboard() {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
