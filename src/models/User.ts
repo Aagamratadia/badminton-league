@@ -9,6 +9,7 @@ export interface IUser extends Document {
   matchesPlayed: number;
   matchesWon: number;
   matchesLost: number;
+  approved: boolean; // New field for admin approval
 }
 
 const UserSchema = new Schema<IUser>({
@@ -20,6 +21,7 @@ const UserSchema = new Schema<IUser>({
   matchesPlayed: { type: Number, default: 0 },
   matchesWon: { type: Number, default: 0 },
   matchesLost: { type: Number, default: 0 },
+  approved: { type: Boolean, default: false }, // New field for admin approval
 });
 
 export default (models.User as Model<IUser>) || mongoose.model<IUser>('User', UserSchema);

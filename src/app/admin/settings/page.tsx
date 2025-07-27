@@ -3,6 +3,8 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import PendingUsers from "./PendingUsers";
+
 export default function AdminSettingsPage() {
   const { data: session, status } = useSession();
   const [pointsForWin, setPointsForWin] = useState(3);
@@ -84,6 +86,7 @@ export default function AdminSettingsPage() {
           </button>
         </form>
       </div>
+      <PendingUsers />
     </main>
   );
 }

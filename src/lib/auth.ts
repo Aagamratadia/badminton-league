@@ -36,6 +36,11 @@ export const authOptions: NextAuthOptions = {
         if (!user) {
           throw new Error('Invalid email or password');
         }
+
+        // Check if approved by admin
+        if (!user.approved) {
+          throw new Error('Your account is pending admin approval. Please wait for approval.');
+        }
         
         const typedUser = user as IUser & { _id: any };
         const isPasswordValid = await bcrypt.compare(credentials.password, typedUser.password);

@@ -35,12 +35,12 @@ export async function POST(request: Request) {
       name,
       email,
       password: hashedPassword,
-      // Default values from the User model
       points: 0,
       role: 'user',
       matchesPlayed: 0,
       matchesWon: 0,
-      matchesLost: 0
+      matchesLost: 0,
+      approved: false // User must be approved by admin
     });
     
     return NextResponse.json(

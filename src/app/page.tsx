@@ -29,9 +29,9 @@ const getRankClass = (rank: number) => {
 
 const getRankIcon = (rank: number) => {
     switch (rank) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
+      case 1: return '1';
+      case 2: return '2';
+      case 3: return '3';
       default: return rank;
     }
 }
@@ -46,30 +46,11 @@ export default async function LeaderboardPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 flex flex-col items-center py-12 sm:py-16 px-4">
       
-      {/* --- Navigation / Actions --- */}
-      <div className="flex flex-wrap justify-end items-center gap-3 w-full max-w-4xl mb-6">
-        {session ? (
-          <>
-            {session.user?.role === 'admin' && (
-              <Link href="/admin/settings" className={`${buttonBaseStyle} bg-amber-400 text-amber-900 hover:bg-amber-500`}>Admin Settings</Link>
-            )}
-            <Link href="/dashboard" className={`${buttonBaseStyle} bg-white text-slate-800 border border-slate-200 hover:bg-slate-100`}>Dashboard</Link>
-            <Link href="/users" className={`${buttonBaseStyle} bg-cyan-600 text-white hover:bg-cyan-700`}>View & Challenge Players</Link>
-            <Link href="/api/auth/signout" className={`${buttonBaseStyle} bg-red-600 text-white hover:bg-red-700`}>Sign Out</Link>
-          </>
-        ) : (
-          <>
-            <Link href="/login" className={`${buttonBaseStyle} bg-cyan-600 text-white hover:bg-cyan-700`}>Sign In</Link>
-            <Link href="/register" className={`${buttonBaseStyle} bg-white text-slate-800 border border-slate-200 hover:bg-slate-100`}>Sign Up</Link>
-          </>
-        )}
-      </div>
-
       {/* --- Leaderboard Card --- */}
       <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-4xl border border-slate-200/80">
         <div className="text-center mb-8">
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">🏸 Badminton League</h1>
-            <p className="mt-3 text-slate-500 max-w-md mx-auto">Live rankings from the court. Points are updated after every verified match.</p>
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">RAWAT ACADEMY KHELGHAR</h1>
+            <h2 className="text-2xl font-bold text-cyan-700 mt-2">Leaderboard</h2>
         </div>
         
         <div className="overflow-x-auto rounded-lg border border-slate-200">
@@ -78,10 +59,10 @@ export default async function LeaderboardPage() {
               <tr>
                 <th scope="col" className="w-24 text-center py-3.5 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Rank</th>
                 <th scope="col" className="py-3.5 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Player</th>
-                <th scope="col" className="py-3.5 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Points</th>
-                <th scope="col" className="py-3.5 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Played</th>
-                <th scope="col" className="py-3.5 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">W</th>
-                <th scope="col" className="py-3.5 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">L</th>
+                <th scope="col" className="py-3.5 px-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Win</th>
+                <th scope="col" className="py-3.5 px-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Lost</th>
+                <th scope="col" className="py-3.5 px-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Played</th>
+                <th scope="col" className="py-3.5 px-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Points</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
@@ -93,17 +74,17 @@ export default async function LeaderboardPage() {
                   <td className="py-4 px-4 whitespace-nowrap">
                     <div className="font-medium text-slate-800">{user.name}</div>
                   </td>
-                  <td className="py-4 px-4 whitespace-nowrap font-bold text-lg text-cyan-700">
-                    {user.points}
-                  </td>
-                  <td className="py-4 px-4 whitespace-nowrap text-slate-700">
-                    {user.matchesPlayed}
-                  </td>
-                  <td className="py-4 px-4 whitespace-nowrap text-slate-700">
+                  <td className="py-4 px-4 whitespace-nowrap text-center text-slate-700 font-medium">
                     {user.matchesWon}
                   </td>
-                  <td className="py-4 px-4 whitespace-nowrap text-slate-700">
+                  <td className="py-4 px-4 whitespace-nowrap text-center text-slate-700 font-medium">
                     {user.matchesLost}
+                  </td>
+                  <td className="py-4 px-4 whitespace-nowrap text-center text-slate-700 font-medium">
+                    {user.matchesPlayed}
+                  </td>
+                  <td className="py-4 px-4 whitespace-nowrap text-center font-bold text-lg text-cyan-700">
+                    {user.points}
                   </td>
                 </tr>
               ))}
