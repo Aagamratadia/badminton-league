@@ -10,6 +10,9 @@ declare module 'next-auth' {
       id: string;
       role: string;
       points: number;
+      matchesPlayed: number;
+      matchesWon: number;
+      matchesLost: number;
     } & DefaultSession['user']
   }
 }
@@ -45,7 +48,10 @@ export const authOptions: NextAuthOptions = {
           email: typedUser.email,
           name: typedUser.name,
           role: typedUser.role,
-          points: typedUser.points
+          points: typedUser.points,
+          matchesPlayed: typedUser.matchesPlayed,
+          matchesWon: typedUser.matchesWon,
+          matchesLost: typedUser.matchesLost
         };
       }
     })
@@ -59,6 +65,9 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.points = user.points;
+        token.matchesPlayed = user.matchesPlayed;
+        token.matchesWon = user.matchesWon;
+        token.matchesLost = user.matchesLost;
       }
       return token;
     },
@@ -67,6 +76,9 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.points = token.points as number;
+        session.user.matchesPlayed = token.matchesPlayed as number;
+        session.user.matchesWon = token.matchesWon as number;
+        session.user.matchesLost = token.matchesLost as number;
       }
       return session;
     },

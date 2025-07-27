@@ -56,10 +56,14 @@ export async function PATCH(
       if (!settings) settings = await Settings.create({});
       if (winner) {
         winner.points += settings.pointsForWin;
+        winner.matchesPlayed = (winner.matchesPlayed || 0) + 1;
+        winner.matchesWon = (winner.matchesWon || 0) + 1;
         await winner.save();
       }
       if (loser) {
         loser.points += settings.pointsForPlay;
+        loser.matchesPlayed = (loser.matchesPlayed || 0) + 1;
+        loser.matchesLost = (loser.matchesLost || 0) + 1;
         await loser.save();
       }
     }

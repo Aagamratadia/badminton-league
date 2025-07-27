@@ -6,7 +6,7 @@ export async function GET() {
   try {
     await dbConnect();
 
-    const users = await User.find({}).sort({ points: -1 }).select('name points');
+    const users = await User.find({}).sort({ points: -1 }).select('name points matchesPlayed matchesLost matchesWon');
 
     return NextResponse.json(users);
   } catch (error) {

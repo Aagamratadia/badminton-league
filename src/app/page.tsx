@@ -79,6 +79,9 @@ export default async function LeaderboardPage() {
                 <th scope="col" className="w-24 text-center py-3.5 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Rank</th>
                 <th scope="col" className="py-3.5 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Player</th>
                 <th scope="col" className="py-3.5 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Points</th>
+                <th scope="col" className="py-3.5 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Played</th>
+                <th scope="col" className="py-3.5 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">W</th>
+                <th scope="col" className="py-3.5 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">L</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
@@ -92,6 +95,15 @@ export default async function LeaderboardPage() {
                   </td>
                   <td className="py-4 px-4 whitespace-nowrap font-bold text-lg text-cyan-700">
                     {user.points}
+                  </td>
+                  <td className="py-4 px-4 whitespace-nowrap text-slate-700">
+                    {user.matchesPlayed}
+                  </td>
+                  <td className="py-4 px-4 whitespace-nowrap text-slate-700">
+                    {user.matchesWon}
+                  </td>
+                  <td className="py-4 px-4 whitespace-nowrap text-slate-700">
+                    {user.matchesLost}
                   </td>
                 </tr>
               ))}

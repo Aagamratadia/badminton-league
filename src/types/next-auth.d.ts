@@ -13,6 +13,9 @@ declare module 'next-auth' {
   interface User extends DefaultUser {
     role: string;
     points: number;
+    matchesPlayed: number;
+    matchesWon: number;
+    matchesLost: number;
   }
 }
 

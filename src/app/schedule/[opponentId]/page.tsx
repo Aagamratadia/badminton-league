@@ -19,6 +19,7 @@ export default function ScheduleMatchPage() {
   const [matchDate, setMatchDate] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (opponentId) {
@@ -53,8 +54,10 @@ export default function ScheduleMatchPage() {
         throw new Error(data.message || 'Failed to schedule match');
       }
 
-      alert('Match scheduled successfully!');
-      router.push('/'); // Redirect to dashboard
+      setShowSuccess(true);
+      setTimeout(() => {
+        router.push('/'); // Redirect to dashboard
+      }, 1500); // Show success message for 1.5 seconds
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -68,6 +71,17 @@ export default function ScheduleMatchPage() {
 
   if (!opponent) {
     return <div className="min-h-screen flex items-center justify-center">Loading opponent details...</div>;
+  }
+
+  if (showSuccess) {
+    return (
+      <main className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 sm:p-8">
+        <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6 sm:p-8 text-center">
+          <h1 className="text-3xl font-bold text-green-600 mb-4">Match Scheduled!</h1>
+          <p className="text-gray-700">Redirecting to dashboard...</p>
+        </div>
+      </main>
+    );
   }
 
   return (
