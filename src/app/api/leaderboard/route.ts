@@ -8,7 +8,9 @@ export async function GET() {
 
     const users = await User.find({}).sort({ points: -1 }).select('name points matchesPlayed matchesLost matchesWon');
 
-    return NextResponse.json(users);
+    const res = NextResponse.json(users);
+    res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    return res;
   } catch (error) {
     console.error('Leaderboard API Error:', error);
     return NextResponse.json({ message: 'Failed to fetch leaderboard data' }, { status: 500 });
