@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import EditMatchModal from './EditMatchModal';
 
 type Player = {
   _id: string;
@@ -36,17 +37,25 @@ function getStatusChip(status: string) {
 }
 
 function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    weekday: 'long', 
-    month: 'short', 
+  const date = new Date(dateString);
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    month: 'short',
     day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  };
+
+  // Only show time if it's not midnight
+  if (date.getHours() !== 0 || date.getMinutes() !== 0) {
+    options.hour = '2-digit';
+    options.minute = '2-digit';
+  }
+
+  return date.toLocaleDateString('en-US', options);
 }
 
-export default function MatchCard({ match, userId, onUpdate }: { match: Match; userId: string; onUpdate: () => void }) {
+export default function MatchCard({ match, userId, userRole, onUpdate }: { match: Match; userId: string; userRole?: string; onUpdate: () => void }) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
   const { text: statusText, className: statusClassName } = getStatusChip(match.status);
   const is2v2 = match.matchType === '2v2';
 
@@ -86,6 +95,28 @@ export default function MatchCard({ match, userId, onUpdate }: { match: Match; u
       onUpdate();
     } catch (error) {
       toast.error('An error occurred while updating the match.');
+      console.error(error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this match?')) return;
+
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/matches/${match._id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete match');
+      }
+      toast.success('Match deleted successfully!');
+      onUpdate();
+    } catch (error: any) {
+      toast.error(error.message);
       console.error(error);
     } finally {
       setIsUpdating(false);
@@ -141,16 +172,27 @@ export default function MatchCard({ match, userId, onUpdate }: { match: Match; u
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200">
-      {/* --- Top Section: Match Type & Status --- */}
-      <div className="flex justify-between items-start gap-4 mb-3">
-        <div>
-          <p className="text-xs font-medium text-slate-500 mb-1">
-            {is2v2 ? '2v2 Match' : '1v1 Match'}
-          </p>
-          <p className="text-sm text-slate-500">
-            {formatDate(match.scheduledDate)}
-          </p>
+    <>
+      <EditMatchModal 
+        isOpen={isEditModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        match={match}
+        onUpdate={() => {
+          onUpdate();
+          setEditModalOpen(false);
+        }}
+        userRole={userRole}
+      />
+      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200">
+        {/* --- Top Section: Match Type & Status --- */}
+        <div className="flex justify-between items-start gap-4 mb-3">
+          <div>
+            <p className="text-xs font-medium text-slate-500 mb-1">
+              {is2v2 ? '2v2 Match' : '1v1 Match'}
+            </p>
+            <p className="text-sm text-slate-500">
+              {formatDate(match.scheduledDate)}
+            </p>
         </div>
         <span className={`text-xs font-semibold uppercase px-2.5 py-1 rounded-full whitespace-nowrap ${statusClassName}`}>
           {statusText}
@@ -208,6 +250,27 @@ export default function MatchCard({ match, userId, onUpdate }: { match: Match; u
       )}
 
       {/* --- Match Result --- */}
+      {/* --- Admin & Edit Actions --- */}
+      {(userRole === 'admin' || match.status === 'completed') && (
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button 
+            onClick={() => setEditModalOpen(true)} 
+            className="px-3 py-1 text-xs font-semibold rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors disabled:opacity-50"
+            disabled={isUpdating}>
+              Edit
+          </button>
+          {userRole === 'admin' && (
+              <button 
+                onClick={handleDelete} 
+                className="px-3 py-1 text-xs font-semibold rounded-md bg-red-100 hover:bg-red-200 text-red-700 transition-colors disabled:opacity-50"
+                disabled={isUpdating}>
+                  Delete
+              </button>
+          )}
+        </div>
+      )}
+
+      {/* --- Match Result --- */}
       {match.status === 'completed' && (
         <div className="mt-3 pt-3 border-t border-slate-100 text-sm">
           <p className="font-medium text-slate-700">
@@ -230,5 +293,6 @@ export default function MatchCard({ match, userId, onUpdate }: { match: Match; u
         </div>
       )}
     </div>
+    </>
   );
 }

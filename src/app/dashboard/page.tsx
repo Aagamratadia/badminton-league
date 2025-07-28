@@ -148,7 +148,8 @@ export default function DashboardPage() {
                     key={match._id} 
                     match={match} 
                     // FIX: No longer 'possibly null' because of the check above
-                    userId={session.user.id as string} 
+                    userId={session.user.id as string}
+                    userRole={session.user.role as string} 
                     onUpdate={fetchMatches}
                   />
                 ))}
@@ -169,7 +170,8 @@ export default function DashboardPage() {
                     key={match._id} 
                     match={match} 
                     // FIX: No longer 'possibly null'
-                    userId={session.user.id as string} 
+                    userId={session.user.id as string}
+                    userRole={session.user.role as string} 
                     onUpdate={fetchMatches}
                   />
                 ))}

@@ -18,9 +18,7 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
+      "@/*": ["./src/*"]
     },
     "plugins": [
       {
@@ -28,6 +26,11 @@
       }
     ],
     "strictNullChecks": true
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
   },
   "include": [
     "next-env.d.ts",

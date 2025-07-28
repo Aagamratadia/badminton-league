@@ -321,7 +321,7 @@ export default function ChallengePage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Match Time
+                      Match Time (Optional)
                     </label>
                     <input
                       type="time"
@@ -329,7 +329,6 @@ export default function ChallengePage() {
                       value={formData.matchTime}
                       onChange={handleChange}
                       className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                      required
                     />
                   </div>
                 </div>

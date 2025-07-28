@@ -21,9 +21,9 @@ export async function POST(request: Request) {
     const { team1, team2, scheduledDate, matchTime } = data;
 
     // Validate required fields
-    if (!team1?.player1 || !team1?.player2 || !team2?.player1 || !team2?.player2 || !scheduledDate || !matchTime) {
+    if (!team1?.player1 || !team1?.player2 || !team2?.player1 || !team2?.player2 || !scheduledDate) {
       return NextResponse.json(
-        { error: 'All fields are required' },
+        { error: 'All player and date fields are required' },
         { status: 400 }
       );
     }
@@ -45,9 +45,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Combine date and time
+    // Combine date and time, defaulting time to midnight if not provided
     const [year, month, day] = scheduledDate.split('-').map(Number);
-    const [hours, minutes] = matchTime.split(':').map(Number);
+    let hours = 0, minutes = 0;
+    if (matchTime) {
+      [hours, minutes] = matchTime.split(':').map(Number);
+    }
     const matchDateTime = new Date(year, month - 1, day, hours, minutes);
 
     // Check if match is in the future
