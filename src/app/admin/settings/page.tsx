@@ -66,7 +66,7 @@ export default function AdminSettingsPage() {
             />
           </div>
           <div>
-            <label className="block font-medium mb-1">Points for Loss/Participation</label>
+            <label className="block font-medium mb-1">Points for Participation</label>
             <input
               type="number"
               value={pointsForPlay}
