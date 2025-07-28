@@ -10,7 +10,9 @@ import SignOutButton from '../../components/SignOutButton';
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [matches, setMatches] = useState<any[]>([]);
+  const [pendingApprovals, setPendingApprovals] = useState<{count: number, users: Array<{name: string, email: string, _id: string}>}>({ count: 0, users: [] });
   const [loading, setLoading] = useState(true);
+  const [loadingApprovals, setLoadingApprovals] = useState(false);
 
   const fetchMatches = useCallback(async () => {
     try {
@@ -27,11 +29,29 @@ export default function DashboardPage() {
     }
   }, []);
 
+  const fetchPendingApprovals = useCallback(async () => {
+    if (session?.user?.role !== 'admin') return;
+    
+    try {
+      setLoadingApprovals(true);
+      const res = await fetch('/api/admin/pending-approvals');
+      if (!res.ok) throw new Error('Failed to fetch pending approvals');
+      const data = await res.json();
+      setPendingApprovals(data);
+    } catch (error) {
+      console.error('Error fetching pending approvals:', error);
+      toast.error('Failed to load pending approvals');
+    } finally {
+      setLoadingApprovals(false);
+    }
+  }, [session?.user?.role]);
+
   useEffect(() => {
     if (status === 'authenticated') {
       fetchMatches();
+      fetchPendingApprovals();
     }
-  }, [status, fetchMatches]);
+  }, [status, fetchMatches, fetchPendingApprovals]);
 
   // Loading and Unauthenticated States
   if (status === 'loading') {
@@ -90,11 +110,29 @@ export default function DashboardPage() {
         </header>
 
         <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-slate-200/80 space-y-10">
+                  {/* Admin Notification */}
+          {session?.user?.role === 'admin' && pendingApprovals.count > 0 && (
+            <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-amber-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-amber-700">
+                    There {pendingApprovals.count === 1 ? 'is' : 'are'} <Link href="/admin/settings" className="font-medium text-amber-700 underline">{pendingApprovals.count} user{pendingApprovals.count === 1 ? '' : 's'} waiting for approval</Link>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <Link 
-            href="/users" 
+            href="/challenge" 
             className="w-full sm:w-auto flex items-center justify-center gap-2 text-center bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30"
           >
-            🏸 View & Challenge Players
+            🏸 Schedule a Match
           </Link>
           
           <section>

@@ -16,10 +16,34 @@ export async function GET(request: Request) {
   try {
     const userId = session.user.id;
     const matches = await Match.find({
-      $or: [{ playerOne: session.user.id }, { playerTwo: session.user.id }],
+      $or: [
+        // 1v1 matches where user is playerOne or playerTwo
+        { 
+          $and: [
+            { matchType: { $ne: '2v2' } },
+            { $or: [
+              { playerOne: userId },
+              { playerTwo: userId }
+            ]}
+          ]
+        },
+        // 2v2 matches where user is in team1 or team2
+        {
+          $or: [
+            { 'team1.player1': userId },
+            { 'team1.player2': userId },
+            { 'team2.player1': userId },
+            { 'team2.player2': userId }
+          ]
+        }
+      ]
     })
       .populate('playerOne', 'name')
       .populate('playerTwo', 'name')
+      .populate('team1.player1', 'name')
+      .populate('team1.player2', 'name')
+      .populate('team2.player1', 'name')
+      .populate('team2.player2', 'name')
       .populate('winner', 'name')
       .sort({ scheduledDate: -1 });
 

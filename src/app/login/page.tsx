@@ -1,15 +1,20 @@
 'use client';
-import { Suspense, useState } from 'react';
+import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Mail, Lock, UserPlus } from 'lucide-react';
 
-function LoginForm() {
+export default function LoginPage() {
   const router = useRouter();
-  const params = useSearchParams();
   const [form, setForm] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -23,79 +28,114 @@ function LoginForm() {
       ...form,
       redirect: false,
     });
-    if (res?.error) {
-      setError('Invalid email or password');
-      setLoading(false);
-    } else {
+    if (res?.ok) {
       router.push('/dashboard');
+    } else {
+      if (res?.error?.toLowerCase().includes('pending admin approval')) {
+        setError('Your account is pending admin approval. Please wait for approval.');
+      } else {
+        setError('Invalid email or password.');
+      }
     }
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-        {params?.get('error') === 'SessionRequired' && (
-          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-            Please log in to continue
-          </div>
-        )}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
-        </form>
-        <div className="mt-4 text-center">
-          <Link href="/register" className="text-sm text-blue-600 hover:text-blue-500">
-            Don't have an account? Register
-          </Link>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-100 via-blue-100 to-blue-200 p-4">
+      <div className="w-full max-w-md">
+        <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-xl">
+          <CardHeader className="space-y-1 text-center">
+            <div className="mx-auto w-14 h-14 bg-cyan-400/20 rounded-full flex items-center justify-center mb-4 shadow-md">
+              <div className="w-8 h-8 bg-cyan-500 rounded-full shadow-cyan-200 shadow-lg" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-cyan-800">
+              Welcome Back
+            </CardTitle>
+            <CardDescription className="text-cyan-700/80">
+              Sign in to your account to continue
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert className="mb-2 bg-red-200">
+                <AlertDescription className="text-black">{error}</AlertDescription>
+              </Alert>
+            )}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-foreground font-medium">
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    className="pl-10 h-12 border-input focus:border-cyan-500 focus:ring-cyan-500"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-foreground font-medium">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                    className="pl-10 h-12 border-input focus:border-cyan-500 focus:ring-cyan-500"
+                  />
+                </div>
+              </div>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 bg-cyan-600 hover:bg-cyan-700 text-white font-medium shadow transition-all duration-200"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
+              </Button>
+            </form>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">
+                  New to the league?
+                </span>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              asChild
+              className="w-full h-12 border-border hover:bg-secondary hover:text-secondary-foreground transition-colors"
+            >
+              <Link href="/register" className="flex items-center gap-2">
+                <UserPlus className="h-4 w-4" />
+                Create Account
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginForm />
-    </Suspense>
   );
 }

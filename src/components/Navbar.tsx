@@ -8,13 +8,14 @@ import {
   Users,
   LogOut,
   LogIn,
-  UserPlus
+  UserPlus,
+  Swords
 } from "lucide-react";
 
 export default function Navbar() {
   const { data: session } = useSession();
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 shadow-elegant">
+    <nav className="sticky top-0 z-50 w-full border-b bg-cyan-700/80 backdrop-blur supports-[backdrop-filter]:bg--800/70 shadow-lg">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Brand/Logo */}
         <div className="flex items-center gap-2">
@@ -45,27 +46,26 @@ export default function Navbar() {
                   </Link>
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className="hover:bg-secondary"
-              >
-                <Link href="/dashboard" className="flex items-center gap-1">
-                  <LayoutDashboard className="w-3 h-3" />
-                  <span className="hidden sm:inline">Dashboard</span>
+              <div className="flex items-center space-x-2">
+                <Link href="/challenge">
+                  <Button variant="ghost" className="text-white hover:bg-cyan-600">
+                    <Users className="mr-2 h-4 w-4" />
+                    2v2 Challenge
+                  </Button>
                 </Link>
-              </Button>
+                <Link href="/dashboard">
+                  <Button variant="ghost" className="text-white hover:bg-cyan-600">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Button>
+                </Link>
+              </div>
               <Button
                 variant="default"
                 size="sm"
                 asChild
                 className="bg-sport-primary hover:bg-sport-primary/90"
               >
-                <Link href="/users" className="flex items-center gap-1">
-                  <Users className="w-3 h-3" />
-                  <span className="hidden sm:inline">Players</span>
-                </Link>
               </Button>
               <Button
                 variant="destructive"

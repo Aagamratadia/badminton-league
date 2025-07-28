@@ -5,7 +5,7 @@ export default function PendingUsers() {
   const [pending, setPending] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [approving, setApproving] = useState<string | null>(null);
+  const [processing, setProcessing] = useState<{id: string | null, action: 'approve' | 'reject' | null}>({ id: null, action: null });
 
   useEffect(() => {
     async function fetchPending() {
@@ -21,20 +21,27 @@ export default function PendingUsers() {
     fetchPending();
   }, []);
 
-  async function approveUser(userId: string) {
-    setApproving(userId);
+  async function updateUserStatus(userId: string, action: 'approve' | 'reject') {
+    setProcessing({ id: userId, action });
     setError("");
-    const res = await fetch("/api/admin/pending-users", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId })
-    });
-    if (res.ok) {
-      setPending(pending.filter(u => u._id !== userId));
-    } else {
-      setError("Failed to approve user");
+    try {
+      const res = await fetch("/api/admin/pending-users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, action })
+      });
+      
+      if (res.ok) {
+        setPending(pending.filter(u => u._id !== userId));
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || `Failed to ${action} user`);
+      }
+    } catch (err) {
+      setError(`Error ${action === 'approve' ? 'approving' : 'rejecting'} user`);
+    } finally {
+      setProcessing({ id: null, action: null });
     }
-    setApproving(null);
   }
 
   return (
@@ -47,18 +54,31 @@ export default function PendingUsers() {
       ) : (
         <ul className="space-y-4">
           {pending.map(user => (
-            <li key={user._id} className="flex items-center justify-between border-b pb-2">
+            <li key={user._id} className="flex items-center justify-between border-b pb-4">
               <div>
                 <div className="font-medium">{user.name}</div>
                 <div className="text-slate-500 text-sm">{user.email}</div>
               </div>
-              <button
-                className="bg-cyan-600 text-white px-4 py-1 rounded hover:bg-cyan-700 disabled:opacity-60"
-                disabled={approving === user._id}
-                onClick={() => approveUser(user._id)}
-              >
-                {approving === user._id ? "Approving..." : "Approve"}
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-60 text-sm"
+                  disabled={!!processing.id}
+                  onClick={() => updateUserStatus(user._id, 'approve')}
+                >
+                  {processing.id === user._id && processing.action === 'approve' ? (
+                    'Approving...'
+                  ) : 'Approve'}
+                </button>
+                <button
+                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:opacity-60 text-sm"
+                  disabled={!!processing.id}
+                  onClick={() => updateUserStatus(user._id, 'reject')}
+                >
+                  {processing.id === user._id && processing.action === 'reject' ? (
+                    'Rejecting...'
+                  ) : 'Reject'}
+                </button>
+              </div>
             </li>
           ))}
         </ul>
