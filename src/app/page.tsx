@@ -70,7 +70,7 @@ export default function LeaderboardPage() {
                   <th scope="col" className="py-3.5 px-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Player</th>
                   <th scope="col" className="py-3.5 px-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Played</th>
                   <th scope="col" className="py-3.5 px-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Win</th>
-                  <th scope="col" className="py-3.5 px-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Lost</th>
+                  <th scope="col" className="py-3.5 px-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">%Wins</th>
                   <th scope="col" className="py-3.5 px-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Points</th>
                 </tr>
               </thead>
@@ -81,7 +81,7 @@ export default function LeaderboardPage() {
                     <td className="py-4 px-4 whitespace-nowrap"><div className="font-medium text-slate-800">{user.name}</div></td>
                     <td className="py-4 px-4 whitespace-nowrap text-center text-slate-700 font-medium">{user.matchesPlayed}</td>
                     <td className="py-4 px-4 whitespace-nowrap text-center text-slate-700 font-medium">{user.matchesWon}</td>
-                    <td className="py-4 px-4 whitespace-nowrap text-center text-slate-700 font-medium">{user.matchesLost}</td>
+                    <td className="py-4 px-4 whitespace-nowrap text-center text-slate-700 font-medium">{user.matchesPlayed ? Math.round((user.matchesWon / user.matchesPlayed) * 100) + '%' : '0%'}</td>
                     <td className="py-4 px-4 whitespace-nowrap text-center font-bold text-lg text-cyan-700">{user.points}</td>
                   </tr>
                 ))}
