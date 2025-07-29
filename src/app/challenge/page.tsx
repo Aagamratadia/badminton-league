@@ -67,6 +67,17 @@ export default function ChallengePage() {
     setIsSubmitting(true);
 
     try {
+      // If matchTime is not selected, set to current IST time (HH:mm)
+      let matchTime = formData.matchTime;
+      if (!matchTime) {
+        const now = new Date();
+        // Convert UTC to IST (+5:30)
+        const istOffset = 5.5 * 60; // in minutes
+        const ist = new Date(now.getTime() + (istOffset + now.getTimezoneOffset()) * 60000);
+        const hh = ist.getHours().toString().padStart(2, '0');
+        const mm = ist.getMinutes().toString().padStart(2, '0');
+        matchTime = `${hh}:${mm}`;
+      }
       const response = await fetch('/api/matches/2v2', {
         method: 'POST',
         headers: {
@@ -82,7 +93,7 @@ export default function ChallengePage() {
             player2: formData.opponent2Id,
           },
           scheduledDate: formData.matchDate,
-          matchTime: formData.matchTime,
+          matchTime,
         }),
       });
 

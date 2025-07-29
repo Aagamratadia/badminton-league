@@ -38,19 +38,17 @@ function getStatusChip(status: string) {
 
 function formatDate(dateString: string) {
   const date = new Date(dateString);
+  // Always show in IST (Asia/Kolkata)
   const options: Intl.DateTimeFormatOptions = {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Kolkata',
   };
-
-  // Only show time if it's not midnight
-  if (date.getHours() !== 0 || date.getMinutes() !== 0) {
-    options.hour = '2-digit';
-    options.minute = '2-digit';
-  }
-
-  return date.toLocaleDateString('en-US', options);
+  return date.toLocaleString('en-IN', options) + ' IST';
 }
 
 export default function MatchCard({ match, userId, userRole, onUpdate }: { match: Match; userId: string; userRole?: string; onUpdate: () => void }) {
