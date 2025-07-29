@@ -39,6 +39,9 @@ export async function PATCH(request: Request, { params }: { params: { userId: st
   await dbConnect();
   const body = await request.json();
   const update: any = {};
+  if (typeof body.name === 'string' && body.name.trim().length > 0) {
+    update.name = body.name.trim();
+  }
   if (typeof body.dob === 'string') {
     const date = new Date(body.dob);
     if (!isNaN(date.getTime())) update.dob = date;
