@@ -96,8 +96,10 @@ export async function DELETE(
       return NextResponse.json({ message: 'Match not found' }, { status: 404 });
     }
 
-    // Revert points AND matchesPlayed before deleting
-    await updateMatchPoints(match, true, true);
+    // Only revert points and matchesPlayed if match was completed
+    if (match.status === 'completed') {
+      await updateMatchPoints(match, true, true);
+    }
 
     await Match.findByIdAndDelete(params.matchId);
 
