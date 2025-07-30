@@ -33,7 +33,7 @@ export async function PATCH(request: Request, { params }: { params: { userId: st
   if (!session || !session.user) {
     return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
   }
-  if (session.user.id !== params.userId) {
+  if (session.user.role !== 'admin' && session.user.id !== params.userId) {
     return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
   await dbConnect();
@@ -59,5 +59,28 @@ export async function PATCH(request: Request, { params }: { params: { userId: st
   } catch (error) {
     console.error('Error updating user:', error);
     return NextResponse.json({ message: 'Error updating user' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request, { params }: { params: { userId: string } }) {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== 'admin') {
+    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+  }
+
+  await dbConnect();
+
+  try {
+    const deletedUser = await User.findByIdAndDelete(params.userId);
+    if (!deletedUser) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+    return NextResponse.json({ message: 'User deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    if (error instanceof Error && error.name === 'CastError') {
+        return NextResponse.json({ message: 'Invalid user ID format' }, { status: 400 });
+    }
+    return NextResponse.json({ message: 'Error deleting user' }, { status: 500 });
   }
 }

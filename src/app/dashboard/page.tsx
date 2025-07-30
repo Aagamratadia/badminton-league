@@ -115,51 +115,47 @@ export default function DashboardPage() {
   const buttonBaseStyle = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors shadow-sm px-4 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2";
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-4xl">
-        <header className="flex flex-col items-start gap-2 mb-8">
-          <div className="flex items-center gap-3 w-full">
-            <span className="inline-flex items-center justify-center rounded-full bg-cyan-100 text-cyan-700 shadow w-12 h-12 mr-2">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" /></svg>
-            </span>
-            <div className="flex items-center gap-2">
-              <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">My Dashboard</h1>
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1 ml-2 px-3 py-1.5 rounded-lg border border-cyan-200 bg-cyan-50 text-cyan-700 font-semibold text-base shadow-sm hover:bg-cyan-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                title="Leaderboard"
-                aria-label="Leaderboard"
-              >
-                <Trophy className="w-5 h-5 mr-1" />
-                Leaderboard
-              </Link>
-              <Link
-                href="/performance"
-                className="inline-flex items-center gap-1 ml-2 px-3 py-1.5 rounded-lg border border-cyan-200 bg-cyan-50 text-cyan-700 font-semibold text-base shadow-sm hover:bg-cyan-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                title="Performance"
-                aria-label="Performance"
-              >
-                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 01-8 0m8 0a4 4 0 00-8 0m8 0V5a4 4 0 00-8 0v2m8 0a4 4 0 01-8 0M3 21v-2a4 4 0 014-4h10a4 4 0 014 4v2" /></svg>
-                Performance
-              </Link>
-              {session.user?.role === 'admin' && (
-                <Link
-                  href="/admin/matches"
-                  className="inline-flex items-center gap-1 ml-2 px-3 py-1.5 rounded-lg border border-cyan-200 bg-cyan-50 text-cyan-700 font-semibold text-base shadow-sm hover:bg-cyan-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                  title="All Matches"
-                  aria-label="All Matches"
-                >
-                  <Table className="w-5 h-5 mr-1" />
-                  All Matches
-                </Link>
-              )}
-            </div>
-            {/* Spacer for right-aligned elements if needed */}
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">My Dashboard</h1>
+            <p className="text-slate-500 mt-1 text-lg">Welcome back, {session.user?.name?.split(' ')[0]}!</p>
           </div>
-          <p className="text-slate-500 mt-1 text-lg">Welcome back, {session.user?.name?.split(' ')[0]}!</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-cyan-200 bg-cyan-50 text-cyan-700 font-semibold text-sm shadow-sm hover:bg-cyan-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              title="Leaderboard"
+              aria-label="Leaderboard"
+            >
+              <Trophy className="w-4 h-4" />
+              Leaderboard
+            </Link>
+            <Link
+              href="/performance"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-cyan-200 bg-cyan-50 text-cyan-700 font-semibold text-sm shadow-sm hover:bg-cyan-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              title="Performance"
+              aria-label="Performance"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 01-8 0m8 0a4 4 0 00-8 0m8 0V5a4 4 0 00-8 0v2m8 0a4 4 0 01-8 0M3 21v-2a4 4 0 014-4h10a4 4 0 014 4v2" /></svg>
+              Performance
+            </Link>
+            {session.user?.role === 'admin' && (
+              <Link
+                href="/admin/matches"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-cyan-200 bg-cyan-50 text-cyan-700 font-semibold text-sm shadow-sm hover:bg-cyan-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                title="All Matches"
+                aria-label="All Matches"
+              >
+                <Table className="w-4 h-4" />
+                All Matches
+              </Link>
+            )}
+          </div>
         </header>
 
-        <div className="bg-white/90 p-6 sm:p-10 rounded-3xl shadow-2xl border border-slate-200/80 space-y-12">
+        <div className="bg-white/90 p-4 sm:p-8 rounded-2xl shadow-2xl border border-slate-200/80 space-y-10">
           {/* Admin Notification */}
           {session?.user?.role === 'admin' && pendingApprovals.count > 0 && (
             <div className="flex items-center gap-4 bg-gradient-to-r from-amber-50 via-amber-100 to-white border-l-4 border-amber-400 p-4 rounded-xl shadow">

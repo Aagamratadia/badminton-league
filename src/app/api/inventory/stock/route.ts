@@ -8,9 +8,9 @@ export async function POST(request: Request) {
   await dbConnect();
 
   try {
-    const { quantity, totalPrice, selectedUserIds } = await request.json();
+    const { companyName, quantity, totalPrice, selectedUserIds } = await request.json();
 
-    if (!quantity || !totalPrice || !selectedUserIds || selectedUserIds.length === 0) {
+    if (!companyName || !quantity || !totalPrice || !selectedUserIds || selectedUserIds.length === 0) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     // 2. Create a new purchase record
     await Purchase.create([
       {
+        companyName,
         quantity,
         totalPrice,
         costPerPlayer,

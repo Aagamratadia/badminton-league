@@ -163,7 +163,7 @@ function ChallengePage() {
       if (!session) return;
       try {
         setIsLoading(true);
-        const response = await fetch('/api/users');
+        const response = await fetch('/api/users/list');
         if (!response.ok) throw new Error('Failed to fetch users');
         const data = await response.json();
         setUsers(data);

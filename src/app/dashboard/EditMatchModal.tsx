@@ -77,8 +77,8 @@ export default function EditMatchModal({ isOpen, onClose, onUpdate, match, userR
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">Edit Match Result</h2>
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-xl w-full max-w-md">
+        <h2 className="text-lg sm:text-xl font-bold mb-4">Edit Match Result</h2>
         
         <div>
           <label htmlFor="winner-select" className="block text-sm font-medium text-slate-700 mb-1">Winner</label>
@@ -93,9 +93,9 @@ export default function EditMatchModal({ isOpen, onClose, onUpdate, match, userR
           </select>
         </div>
 
-        <div className="mt-6 flex justify-end gap-3">
-          <button onClick={onClose} disabled={isSaving} className="px-4 py-2 text-sm font-medium rounded-md bg-slate-200 hover:bg-slate-300 transition-colors disabled:opacity-50">Cancel</button>
-          <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 text-sm font-medium rounded-md bg-cyan-600 text-white hover:bg-cyan-700 transition-colors disabled:opacity-50">
+        <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+          <button onClick={onClose} disabled={isSaving} className="w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-md bg-slate-200 hover:bg-slate-300 transition-colors disabled:opacity-50">Cancel</button>
+          <button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-md bg-cyan-600 text-white hover:bg-cyan-700 transition-colors disabled:opacity-50">
             {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>

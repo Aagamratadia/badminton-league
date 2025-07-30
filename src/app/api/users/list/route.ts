@@ -7,15 +7,14 @@ import { authOptions } from '@/lib/auth';
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
 
-  if (!session || !session.user) {
-    return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
+  if (!session || session.user.role !== 'admin') {
+    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
   await dbConnect();
 
   try {
-    // Find all users except the currently logged-in one, and select only necessary fields
-    const users = await User.find({ _id: { $ne: session.user.id } }).select('name email points');
+    const users = await User.find({}).select('name email role');
     return NextResponse.json(users, { status: 200 });
   } catch (error) {
     console.error('Error fetching users:', error);

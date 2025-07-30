@@ -11,6 +11,7 @@ export interface Purchase {
   quantity: number;
   totalPrice: number;
   costPerPlayer: number;
+  companyName: string;
   splitAmong: string[];
 }
 

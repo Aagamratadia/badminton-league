@@ -213,9 +213,9 @@ export default function MatchCard({ match, userId, userRole, onUpdate }: { match
           </>
         ) : (
           <div className="text-center">
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
               {renderTeam(userTeam, true)}
-              <span className="text-slate-400">vs</span>
+              <span className="text-slate-400 sm:mx-2">vs</span>
               {renderTeam(opponentTeam)}
             </div>
           </div>

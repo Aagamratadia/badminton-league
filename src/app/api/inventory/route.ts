@@ -16,7 +16,12 @@ export async function GET() {
       inventory = await Inventory.create({ totalShuttles: 0 });
     }
 
-    const purchases = await Purchase.find({}).sort({ purchaseDate: -1 }).populate('splitAmong', 'name');
+    const purchasesRaw = await Purchase.find({}).sort({ purchaseDate: -1 }).populate('splitAmong', 'name');
+    // Ensure every purchase has a companyName
+    const purchases = purchasesRaw.map((p: any) => ({
+      ...p.toObject(),
+      companyName: p.companyName || 'Unknown',
+    }));
     const usageLogs = await UsageLog.find({}).sort({ usageDate: -1 });
     const usersData: IUser[] = await User.find({}).select('name outstandingBalance role');
 

@@ -6,6 +6,7 @@ export interface IPurchase extends Document {
   quantity: number;
   totalPrice: number;
   costPerPlayer: number;
+  companyName: string;
   splitAmong: mongoose.Schema.Types.ObjectId[];
 }
 
@@ -14,6 +15,7 @@ const PurchaseSchema: Schema<IPurchase> = new Schema({
   quantity: { type: Number, required: true },
   totalPrice: { type: Number, required: true },
   costPerPlayer: { type: Number, required: true },
+  companyName: { type: String, required: true },
   splitAmong: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 });
 

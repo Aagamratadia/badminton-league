@@ -51,14 +51,14 @@ function ProfileDropdown({ userId }: { userId: string }) {
           <Link
             href={`/users/${userId}`}
             className="block px-4 py-3 text-slate-800 hover:bg-cyan-50 rounded-t-lg transition-colors text-base"
-            onClick={() => setOpen(false)}
+            onClick={() => { setOpen(false); }}
           >
             <span className="flex items-center gap-2"><User className="w-4 h-4" /> Profile</span>
           </Link>
           <Link
             href="/api/auth/signout"
             className="block px-4 py-3 text-red-600 hover:bg-red-50 rounded-b-lg transition-colors text-base"
-            onClick={() => setOpen(false)}
+            onClick={() => { setOpen(false); }}
           >
             <span className="flex items-center gap-2"><LogOut className="w-4 h-4" /> Sign Out</span>
           </Link>
@@ -122,6 +122,17 @@ export default function Navbar() {
                       <span className="hidden sm:inline font-semibold">Inventory</span>
                     </Link>
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="bg-cyan-100/10 text-cyan-100 border-cyan-200/20 hover:bg-cyan-100 hover:text-cyan-800 transition-all duration-200 rounded-lg shadow-sm"
+                  >
+                    <Link href="/admin/users" className="flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      <span className="hidden sm:inline font-semibold">Users</span>
+                    </Link>
+                  </Button>
                 </>
               )}
               <div className="flex items-center space-x-2">
@@ -174,14 +185,22 @@ export default function Navbar() {
           {session ? (
             <>
               {session.user?.role === "admin" && (
-                <Link href="/admin/settings" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors">
-                  <span className="flex items-center gap-2"><Settings className="w-4 h-4" /> Admin</span>
-                </Link>
+                <>
+                  <Link href="/admin/settings" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                    <span className="flex items-center gap-2"><Settings className="w-4 h-4" /> Admin</span>
+                  </Link>
+                  <Link href="/inventory" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                    <span className="flex items-center gap-2"><Archive className="w-4 h-4" /> Inventory</span>
+                  </Link>
+                  <Link href="/admin/users" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                    <span className="flex items-center gap-2"><Users className="w-4 h-4" /> Users</span>
+                  </Link>
+                </>
               )}
-              <Link href="/challenge" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors">
+              <Link href="/challenge" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 <span className="flex items-center gap-2"><Users className="w-4 h-4" /> 2v2 Challenge</span>
               </Link>
-              <Link href="/dashboard" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors">
+              <Link href="/dashboard" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 <span className="flex items-center gap-2"><LayoutDashboard className="w-4 h-4" /> Dashboard</span>
               </Link>
               <div className="mt-2">
@@ -190,10 +209,10 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors">
+              <Link href="/login" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 <span className="flex items-center gap-2"><LogIn className="w-4 h-4" /> Sign In</span>
               </Link>
-              <Link href="/register" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors">
+              <Link href="/register" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 <span className="flex items-center gap-2"><UserPlus className="w-4 h-4" /> Sign Up</span>
               </Link>
             </>
