@@ -69,10 +69,10 @@ function ProfileDropdown({ userId }: { userId: string }) {
 
 export default function Navbar() {
   const { data: session } = useSession();
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-cyan-800/30 bg-gradient-to-r from-cyan-800 via-cyan-700 to-cyan-600/90 backdrop-blur-lg shadow-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-2 sm:px-6">
-
         {/* Brand/Logo */}
         <div className="flex items-center gap-2">
           <Link
@@ -85,8 +85,16 @@ export default function Navbar() {
             League
           </span>
         </div>
-        {/* Nav Links */}
-        <div className="flex items-center gap-1 sm:gap-3">
+        {/* Hamburger for mobile */}
+        <button
+          className="sm:hidden flex items-center px-3 py-2 border rounded text-cyan-100 border-cyan-400 hover:text-cyan-200 hover:border-cyan-200 focus:outline-none"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          aria-label="Toggle navigation menu"
+        >
+          <svg className="fill-current h-6 w-6" viewBox="0 0 20 20"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z" /></svg>
+        </button>
+        {/* Nav Links - Desktop */}
+        <div className="hidden sm:flex items-center gap-1 sm:gap-3">
           {session ? (
             <>
               {session.user?.role === "admin" && (
@@ -146,6 +154,38 @@ export default function Navbar() {
           )}
         </div>
       </div>
+      {/* Mobile menu dropdown */}
+      {mobileMenuOpen && (
+        <div className="sm:hidden bg-cyan-900/95 px-4 pt-2 pb-4 shadow-lg border-t border-cyan-800 animate-fade-in">
+          {session ? (
+            <>
+              {session.user?.role === "admin" && (
+                <Link href="/admin/settings" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors">
+                  <span className="flex items-center gap-2"><Settings className="w-4 h-4" /> Admin</span>
+                </Link>
+              )}
+              <Link href="/challenge" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors">
+                <span className="flex items-center gap-2"><Users className="w-4 h-4" /> 2v2 Challenge</span>
+              </Link>
+              <Link href="/dashboard" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors">
+                <span className="flex items-center gap-2"><LayoutDashboard className="w-4 h-4" /> Dashboard</span>
+              </Link>
+              <div className="mt-2">
+                <ProfileDropdown userId={session.user.id} />
+              </div>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors">
+                <span className="flex items-center gap-2"><LogIn className="w-4 h-4" /> Sign In</span>
+              </Link>
+              <Link href="/register" className="block py-2 px-2 text-cyan-100 hover:bg-cyan-800 rounded transition-colors">
+                <span className="flex items-center gap-2"><UserPlus className="w-4 h-4" /> Sign Up</span>
+              </Link>
+            </>
+          )}
+        </div>
+      )}
     </nav>
   );
 }
