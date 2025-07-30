@@ -10,7 +10,8 @@ import {
   LogIn,
   UserPlus,
   Swords,
-  User
+  User,
+  Archive
 } from "lucide-react";
 
 // ProfileDropdown for navbar user icon
@@ -98,17 +99,30 @@ export default function Navbar() {
           {session ? (
             <>
               {session.user?.role === "admin" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="bg-cyan-100/10 text-cyan-100 border-cyan-200/20 hover:bg-cyan-100 hover:text-cyan-800 transition-all duration-200 rounded-lg shadow-sm"
-                >
-                  <Link href="/admin/settings" className="flex items-center gap-1">
-                    <Settings className="w-4 h-4" />
-                    <span className="hidden sm:inline font-semibold">Admin</span>
-                  </Link>
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="bg-cyan-100/10 text-cyan-100 border-cyan-200/20 hover:bg-cyan-100 hover:text-cyan-800 transition-all duration-200 rounded-lg shadow-sm"
+                  >
+                    <Link href="/admin/settings" className="flex items-center gap-1">
+                      <Settings className="w-4 h-4" />
+                      <span className="hidden sm:inline font-semibold">Admin</span>
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="bg-cyan-100/10 text-cyan-100 border-cyan-200/20 hover:bg-cyan-100 hover:text-cyan-800 transition-all duration-200 rounded-lg shadow-sm"
+                  >
+                    <Link href="/inventory" className="flex items-center gap-1">
+                      <Archive className="w-4 h-4" />
+                      <span className="hidden sm:inline font-semibold">Inventory</span>
+                    </Link>
+                  </Button>
+                </>
               )}
               <div className="flex items-center space-x-2">
                 <Link href="/challenge">

@@ -3,9 +3,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-import { Trophy, Table } from 'lucide-react';
+import { formatToINR } from '@/utils/currency';
+import { Trophy, Table, DollarSign } from 'lucide-react';
+import { User } from '@/types';
 
-import MatchCard from './MatchCard'; 
+import MatchCard from './MatchCard';  
 import SignOutButton from '../../components/SignOutButton'; 
 
 export default function DashboardPage() {
@@ -14,6 +16,7 @@ export default function DashboardPage() {
   const [pendingApprovals, setPendingApprovals] = useState<{count: number, users: Array<{name: string, email: string, _id: string}>}>({ count: 0, users: [] });
   const [loading, setLoading] = useState(true);
   const [loadingApprovals, setLoadingApprovals] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const fetchMatches = useCallback(async () => {
     try {
@@ -46,6 +49,24 @@ export default function DashboardPage() {
       setLoadingApprovals(false);
     }
   }, [session?.user?.role]);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      if (session?.user) {
+        try {
+          const res = await fetch('/api/users/me');
+          if (!res.ok) throw new Error('Failed to fetch user data');
+          const userData = await res.json();
+          setCurrentUser({ ...session.user, ...userData });
+        } catch (error) {
+          console.error(error);
+          toast.error('Failed to load your balance.');
+        }
+      }
+    };
+
+    fetchCurrentUser();
+  }, [session]);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -112,6 +133,15 @@ export default function DashboardPage() {
                 <Trophy className="w-5 h-5 mr-1" />
                 Leaderboard
               </Link>
+              <Link
+                href="/performance"
+                className="inline-flex items-center gap-1 ml-2 px-3 py-1.5 rounded-lg border border-cyan-200 bg-cyan-50 text-cyan-700 font-semibold text-base shadow-sm hover:bg-cyan-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                title="Performance"
+                aria-label="Performance"
+              >
+                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 01-8 0m8 0a4 4 0 00-8 0m8 0V5a4 4 0 00-8 0v2m8 0a4 4 0 01-8 0M3 21v-2a4 4 0 014-4h10a4 4 0 014 4v2" /></svg>
+                Performance
+              </Link>
               {session.user?.role === 'admin' && (
                 <Link
                   href="/admin/matches"
@@ -143,6 +173,18 @@ export default function DashboardPage() {
                   <span className="font-semibold">{pendingApprovals.count} user{pendingApprovals.count === 1 ? '' : 's'}</span> waiting for approval.{' '}
                   <Link href="/admin/settings" className="underline hover:text-amber-600">Review now</Link>
                 </p>
+              </div>
+            </div>
+          )}
+
+          {currentUser && currentUser.role === 'user' && (
+            <div className="bg-white shadow rounded-lg p-4 mb-6 flex items-center">
+              <div className="bg-green-500 rounded-full p-3">
+                <DollarSign className="h-6 w-6 text-white" />
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-semibold">Your Balance</h3>
+                <p className="text-3xl font-bold">{formatToINR(currentUser.outstandingBalance)}</p>
               </div>
             </div>
           )}
