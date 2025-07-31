@@ -52,6 +52,7 @@ export default function InventoryPage() {
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [purchaseToDelete, setPurchaseToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState('balances');
 
   // --- Data Fetching and Handlers ---
@@ -62,7 +63,10 @@ export default function InventoryPage() {
       if (!res.ok) throw new Error('Failed to fetch data');
       const data = await res.json();
       setTotalShuttles(data.totalShuttles || 0);
-      setPurchases(data.purchases || []);
+      setPurchases((data.purchases || []).map((p: any) => ({
+        ...p,
+        id: p.id || p._id || '',
+      })));
       setUsers(data.users || []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -88,14 +92,21 @@ export default function InventoryPage() {
     }
 
     try {
-      // NOTE: This is a mock API call. Replace with your actual API endpoint.
-      console.log("Submitting stock:", { companyName, quantity, totalPrice, userIdsToSubmit });
+      const res = await fetch('/api/inventory/stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyName, quantity, totalPrice, selectedUserIds: userIdsToSubmit }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to add stock');
+      }
       setToastMessage('Stock added and costs split successfully! 🏸');
       (event.target as HTMLFormElement).reset();
       setSelectedUsers({});
       await fetchData(false);
     } catch (error) {
-      console.error(error)
+      console.error(error);
       setToastMessage('Error adding stock.');
     } finally {
       setIsSubmittingStock(false);
@@ -107,12 +118,19 @@ export default function InventoryPage() {
     setIsSubmittingUsage(true);
     const formData = new FormData(event.currentTarget);
     const quantityUsed = Number(formData.get('quantityUsed'));
+    if (!quantityUsed || quantityUsed < 1) {
+      setToastMessage('Please enter a valid quantity used.');
+      setIsSubmittingUsage(false);
+      return;
+    }
     try {
-      // NOTE: This is a mock API call. Replace with your actual API endpoint.
-      console.log("Logging usage:", { quantityUsed });
+      // Mock: update totalShuttles and add a usage log locally
+      setTotalShuttles(prev => Math.max(0, prev - quantityUsed));
+      // Optionally, you can add a usageLogs state and push a new log here
       setToastMessage('Usage logged successfully!');
       (event.target as HTMLFormElement).reset();
-      await fetchData(false);
+      // If you have a backend, replace the above with an API call and update state from response
+      // await fetchData(false);
     } catch (error) {
       console.error(error);
       setToastMessage('Error logging usage.');
@@ -123,7 +141,14 @@ export default function InventoryPage() {
 
   const handleUpdatePurchase = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!editingPurchase) return;
+    if (!editingPurchase) {
+      setToastMessage('Error: No purchase selected for editing!');
+      return;
+    }
+    if (!editingPurchase.id) {
+      setToastMessage('Error: Purchase ID is missing for editing!');
+      return;
+    }
     const formData = new FormData(event.currentTarget);
     const companyName = formData.get('companyName') as string;
     const quantity = Number(formData.get('editQuantity'));
@@ -135,9 +160,19 @@ export default function InventoryPage() {
       return;
     }
 
+    // Ensure only user IDs (as strings) are sent, not user objects
+    const selectedUserIds = userIdsToSubmit.map(id => String(id));
+
     try {
-      // NOTE: Replace with your actual API call
-      console.log("Updating purchase:", { id: editingPurchase.id, companyName, quantity, totalPrice, userIdsToSubmit });
+      const res = await fetch(`/api/inventory/purchases/${editingPurchase.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyName, quantity, totalPrice, selectedUserIds }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to update purchase');
+      }
       setToastMessage('Purchase updated successfully!');
       closeModal();
       await fetchData(false);
@@ -148,16 +183,28 @@ export default function InventoryPage() {
   };
 
   const handleDeletePurchase = async () => {
-    if (!purchaseToDelete) return;
+    if (!purchaseToDelete) {
+      setToastMessage('Error: No purchase selected for deletion!');
+      return;
+    }
+    setIsDeleting(true);
+    console.log('Deleting purchase with id:', purchaseToDelete);
     try {
-      // NOTE: Replace with your actual API call
-      console.log("Deleting purchase:", purchaseToDelete);
+      const res = await fetch(`/api/inventory/purchases/${purchaseToDelete}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to delete purchase');
+      }
       setToastMessage('Purchase deleted successfully!');
       closeModal();
       await fetchData(false);
     } catch (error) {
-      console.error(error);
+      console.error('Delete error:', error);
       setToastMessage(`Failed to delete purchase: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -175,7 +222,11 @@ export default function InventoryPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteClick = (purchaseId: string) => {
+  const handleDeleteClick = (purchaseId: string | undefined | null) => {
+    if (!purchaseId) {
+      setToastMessage('Error: Purchase ID is missing!');
+      return;
+    }
     setPurchaseToDelete(purchaseId);
     setIsDeleteConfirmOpen(true);
   };
@@ -204,7 +255,52 @@ export default function InventoryPage() {
       <div className="container mx-auto p-4 md:p-6 lg:p-8">
         {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
         
-        <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-6">Inventory</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-800">Inventory</h1>
+          <div className="flex items-center">
+            <button
+              className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded flex items-center disabled:opacity-60"
+              onClick={() => fetchData()}
+              disabled={loading}
+              title="Refresh inventory and balances"
+            >
+              {loading ? (
+                <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+              ) : (
+                <svg className="h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582M20 20v-5h-.581M5 19A9 9 0 105 5" />
+                </svg>
+              )}
+              Refresh
+            </button>
+            <button
+              className="ml-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded flex items-center disabled:opacity-60"
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const res = await fetch('/api/inventory/reset-balances', { method: 'POST' });
+                  if (!res.ok) throw new Error('Failed to reset balances');
+                  setToastMessage('All player balances reset to 0!');
+                  await fetchData(false);
+                } catch (e) {
+                  setToastMessage('Failed to reset balances.');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+              title="Set all player balances to 0"
+            >
+              <svg className="h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Reset All Balances
+            </button>
+          </div>
+        </div>
         
         <Modal isOpen={isEditModalOpen} onClose={closeModal} title="Edit Purchase">
           {editingPurchase && (
@@ -243,8 +339,10 @@ export default function InventoryPage() {
         <Modal isOpen={isDeleteConfirmOpen} onClose={closeModal} title="Confirm Deletion">
           <p className="text-sm text-slate-600">Are you sure you want to delete this purchase record? This will adjust player balances accordingly and cannot be undone.</p>
           <div className="flex justify-end space-x-3 pt-6">
-            <button type="button" onClick={closeModal} className="btn-secondary">Cancel</button>
-            <button onClick={handleDeletePurchase} className="btn-danger">Delete Purchase</button>
+            <button type="button" onClick={closeModal} className="btn-secondary" disabled={isDeleting}>Cancel</button>
+            <button onClick={handleDeletePurchase} className="btn-danger" disabled={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete Purchase'}
+            </button>
           </div>
         </Modal>
 
