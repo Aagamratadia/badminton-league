@@ -1,22 +1,26 @@
 'use client';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { formatToINR } from '@/utils/currency';
-import { Trophy, Table, DollarSign } from 'lucide-react';
+import { Trophy, Table, DollarSign, Feather } from 'lucide-react';
 import { User } from '@/types';
 
 import MatchCard from './MatchCard';  
 import SignOutButton from '../../components/SignOutButton'; 
 
 export default function DashboardPage() {
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [matches, setMatches] = useState<any[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<{count: number, users: Array<{name: string, email: string, _id: string}>}>({ count: 0, users: [] });
   const [loading, setLoading] = useState(true);
   const [loadingApprovals, setLoadingApprovals] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [totalShuttles, setTotalShuttles] = useState<number | null>(null);
 
   const fetchMatches = useCallback(async () => {
     try {
@@ -72,6 +76,11 @@ export default function DashboardPage() {
     if (status === 'authenticated') {
       fetchMatches();
       fetchPendingApprovals();
+      // Fetch shuttle count
+      fetch('/api/inventory')
+        .then(res => res.json())
+        .then(data => setTotalShuttles(data.totalShuttles))
+        .catch(() => setTotalShuttles(null));
     }
   }, [status, fetchMatches, fetchPendingApprovals]);
 
@@ -174,13 +183,30 @@ export default function DashboardPage() {
           )}
 
           {currentUser && currentUser.role === 'user' && (
-            <div className="bg-white shadow rounded-lg p-4 mb-6 flex items-center">
-              <div className="bg-green-500 rounded-full p-3">
-                <DollarSign className="h-6 w-6 text-white" />
+            <div className="bg-white shadow rounded-lg p-4 mb-6 flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="bg-green-500 rounded-full p-3">
+                  <DollarSign className="h-6 w-6 text-white" />
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-lg font-semibold">Your Balance</h3>
+                  <p className="text-3xl font-bold">{formatToINR(currentUser.outstandingBalance)}</p>
+                </div>
+                <button
+                  className="ml-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-sm font-semibold shadow transition-colors"
+                  onClick={() => toast.success('Marked as paid!')}
+                >
+                  Paid
+                </button>
               </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold">Your Balance</h3>
-                <p className="text-3xl font-bold">{formatToINR(currentUser.outstandingBalance)}</p>
+              <div className="flex flex-row items-center ml-6 gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="text-sm text-slate-500 mb-1">Shuttles Left</span>
+                  <span className="text-2xl font-bold text-cyan-600 flex items-center gap-1">
+                    <Feather className="w-6 h-6 text-cyan-500" />
+                    {totalShuttles !== null ? totalShuttles : '--'}
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -195,12 +221,41 @@ export default function DashboardPage() {
               </h2>
               <p className="text-slate-500 mb-4">Challenge your friends or rivals to a new match!</p>
             </div>
-            <Link 
-              href="/challenge" 
+            <button
+              type="button"
+              onClick={() => setShowScheduleModal(true)}
               className="w-full sm:w-auto flex items-center justify-center gap-2 text-center bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 px-7 rounded-xl transition-colors shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 text-lg"
             >
               🏸 Schedule
-            </Link>
+            </button>
+
+            {/* Schedule Modal */}
+            {showScheduleModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="bg-white rounded-2xl p-8 shadow-xl w-80 flex flex-col items-center">
+                  <h3 className="text-xl font-bold mb-6 text-slate-800">Select Match Type</h3>
+                  <button
+                    className="w-full mb-4 py-3 rounded-lg bg-cyan-600 text-white font-semibold text-lg hover:bg-cyan-700 transition-colors"
+                    onClick={() => { setShowScheduleModal(false); router.push('/users'); }}
+                  >
+                    1v1 Match
+                  </button>
+                  <button
+                    className="w-full py-3 rounded-lg bg-cyan-100 text-cyan-700 font-semibold text-lg hover:bg-cyan-200 transition-colors"
+                    onClick={() => { setShowScheduleModal(false); router.push('/challenge?type=2v2'); }}
+                  >
+                    2v2 Match
+                  </button>
+                  <button
+                    className="absolute top-3 right-4 text-slate-400 hover:text-slate-700 text-2xl"
+                    onClick={() => setShowScheduleModal(false)}
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <section className="pt-2">

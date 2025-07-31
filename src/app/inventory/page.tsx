@@ -54,6 +54,7 @@ export default function InventoryPage() {
   const [purchaseToDelete, setPurchaseToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState('balances');
+  const [confirmingPayments, setConfirmingPayments] = useState<Record<string, boolean>>({});
 
   // --- Data Fetching and Handlers ---
   const fetchData = async (showLoader = true) => {
@@ -231,6 +232,27 @@ export default function InventoryPage() {
     setIsDeleteConfirmOpen(true);
   };
 
+  const handleConfirmPayment = async (userId: string) => {
+    setConfirmingPayments(prev => ({ ...prev, [userId]: true }));
+    try {
+      const res = await fetch(`/api/users/${userId}/confirm-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to confirm payment');
+      }
+      setToastMessage('Payment confirmed! Balance reset to ₹0.');
+      await fetchData(false);
+    } catch (error) {
+      console.error(error);
+      setToastMessage(`Failed to confirm payment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setConfirmingPayments(prev => ({ ...prev, [userId]: false }));
+    }
+  };
+
   const closeModal = () => {
     setIsEditModalOpen(false);
     setIsDeleteConfirmOpen(false);
@@ -369,7 +391,12 @@ export default function InventoryPage() {
                       <div>
                         <h4 className="text-sm font-medium text-slate-600 mb-2">Split cost among:</h4>
                         <div className="space-y-1 max-h-36 overflow-y-auto pr-2 border rounded-md p-2">
-                          {users.filter(u => u.role !== 'admin').map(user => (<div key={user.id} onClick={() => handleUserSelection(String(user.id))} className={`flex items-center p-2 rounded-lg cursor-pointer transition-colors duration-200 ${selectedUsers[String(user.id)] ? 'bg-sky-100' : 'hover:bg-slate-100'}`}><input type="checkbox" id={`user-${user.id}`} checked={!!selectedUsers[String(user.id)]} readOnly className="h-4 w-4 text-sky-600 border-slate-300 rounded focus:ring-sky-500" /><label htmlFor={`user-${user.id}`} className="ml-3 text-sm font-medium text-slate-700 cursor-pointer">{user.name}</label></div>))}
+                          {users.filter(u => u.role !== 'admin').map(user => (
+                            <div key={user.id} onClick={() => handleUserSelection(String(user.id))} className={`flex items-center p-2 rounded-lg cursor-pointer transition-colors duration-200 ${selectedUsers[String(user.id)] ? 'bg-sky-100' : 'hover:bg-slate-100'}`}>
+                              <input type="checkbox" id={`user-${user.id}`} checked={!!selectedUsers[String(user.id)]} readOnly className="h-4 w-4 text-sky-600 border-slate-300 rounded focus:ring-sky-500" />
+                              <label htmlFor={`user-${user.id}`} className="ml-3 text-sm font-medium text-slate-700 cursor-pointer">{user.name}</label>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -408,7 +435,21 @@ export default function InventoryPage() {
                     {users.filter(u => u.role !== 'admin').map(user => (
                       <tr key={user.id} className="hover:bg-sky-50/70 transition-colors">
                         <td className="table-cell font-medium text-slate-800">{user.name}</td>
-                        <td className={`table-cell text-right font-semibold ${(user.outstandingBalance || 0) > 0 ? 'text-red-500' : 'text-green-600'}`}>{formatToINR(user.outstandingBalance || 0)}</td>
+                        <td className="table-cell text-right font-semibold">
+                          <span className={`${(user.outstandingBalance || 0) > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                            {formatToINR(user.outstandingBalance || 0)}
+                          </span>
+                          {user.outstandingBalance > 0 && (
+                            <button
+                              onClick={() => handleConfirmPayment(user.id)}
+                              className="ml-2 px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-xs transition-colors"
+                              disabled={confirmingPayments[user.id]}
+                              title="Confirm that this player has paid their balance"
+                            >
+                              {confirmingPayments[user.id] ? 'Confirming...' : 'Confirm Payment'}
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

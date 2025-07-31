@@ -147,6 +147,10 @@ export async function PATCH(
     }
 
     // Apply updates to the match object
+    if (body.winnerId && match.matchType === '1v1') {
+      match.winner = body.winnerId;
+      delete body.winnerId;
+    }
     Object.assign(match, body);
     
     // If the update makes the match completed, award new points
