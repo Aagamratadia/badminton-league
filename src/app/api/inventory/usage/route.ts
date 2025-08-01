@@ -33,3 +33,14 @@ export async function POST(request: Request) {
     session.endSession();
   }
 }
+
+export async function GET() {
+  await dbConnect();
+  try {
+    const logs = await UsageLog.find({}).sort({ usageDate: -1 });
+    return NextResponse.json({ logs });
+  } catch (error) {
+    console.error('Failed to fetch usage logs:', error);
+    return NextResponse.json({ message: 'Failed to fetch usage logs' }, { status: 500 });
+  }
+}

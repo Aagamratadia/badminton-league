@@ -55,6 +55,7 @@ export default function InventoryPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState('balances');
   const [confirmingPayments, setConfirmingPayments] = useState<Record<string, boolean>>({});
+  const [usageLogs, setUsageLogs] = useState<{ usageDate: string; quantityUsed: number }[]>([]);
 
   // --- Data Fetching and Handlers ---
   const fetchData = async (showLoader = true) => {
@@ -76,6 +77,28 @@ export default function InventoryPage() {
       if (showLoader) setLoading(false);
     }
   };
+
+  const fetchUsageLogs = async () => {
+    try {
+      const res = await fetch('/api/inventory/usage');
+      if (!res.ok) throw new Error('Failed to fetch usage logs');
+      const data = await res.json();
+      setUsageLogs(data.logs || []);
+    } catch (error) {
+      console.error('Error fetching usage logs:', error);
+      setToastMessage('Failed to load usage logs.');
+    }
+  };
+
+  useEffect(() => {
+    fetchUsageLogs();
+  }, []);
+
+  useEffect(() => {
+    const isUserAdmin = true;
+    if (!isUserAdmin) router.push('/dashboard');
+    else fetchData();
+  }, [router]);
 
   const handleStockSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -125,13 +148,19 @@ export default function InventoryPage() {
       return;
     }
     try {
-      // Mock: update totalShuttles and add a usage log locally
-      setTotalShuttles(prev => Math.max(0, prev - quantityUsed));
-      // Optionally, you can add a usageLogs state and push a new log here
+      const res = await fetch('/api/inventory/usage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantityUsed }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to log usage');
+      }
       setToastMessage('Usage logged successfully!');
       (event.target as HTMLFormElement).reset();
-      // If you have a backend, replace the above with an API call and update state from response
-      // await fetchData(false);
+      await fetchData(false); // Refresh state from backend
+    await fetchUsageLogs(); // Refresh usage logs
     } catch (error) {
       console.error(error);
       setToastMessage('Error logging usage.');
@@ -423,6 +452,31 @@ export default function InventoryPage() {
               </nav>
             </div>
             <div className="overflow-x-auto">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-slate-700 flex items-center gap-2 mb-2"><LogIcon className="w-6 h-6 text-sky-500" /> Usage Log History</h3>
+                <div className="border rounded-lg overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-sky-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left font-medium text-slate-600">Date</th>
+                        <th className="px-4 py-2 text-left font-medium text-slate-600">Quantity Used</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {usageLogs.length === 0 ? (
+                        <tr><td colSpan={2} className="px-4 py-3 text-slate-400 text-center">No usage logs found.</td></tr>
+                      ) : (
+                        usageLogs.map((log, idx) => (
+                          <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                            <td className="px-4 py-2">{new Date(log.usageDate).toLocaleString()}</td>
+                            <td className="px-4 py-2">{log.quantityUsed}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
               {activeTab === 'balances' && (
                 <table className="min-w-full">
                   <thead className="bg-sky-50">
