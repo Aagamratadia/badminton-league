@@ -21,6 +21,8 @@ export default function DashboardPage() {
   const [loadingApprovals, setLoadingApprovals] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [totalShuttles, setTotalShuttles] = useState<number | null>(null);
+  const [purchases, setPurchases] = useState<any[]>([]);
+  const [fundContributions, setFundContributions] = useState<any[]>([]);
 
   const fetchMatches = useCallback(async () => {
     try {
@@ -76,11 +78,19 @@ export default function DashboardPage() {
     if (status === 'authenticated') {
       fetchMatches();
       fetchPendingApprovals();
-      // Fetch shuttle count
+      
       fetch('/api/inventory')
         .then(res => res.json())
-        .then(data => setTotalShuttles(data.totalShuttles))
+        .then(data => {
+          setTotalShuttles(data.totalShuttles);
+          setPurchases(data.purchases || []);
+        })
         .catch(() => setTotalShuttles(null));
+
+      fetch('/api/funds')
+        .then(res => res.json())
+        .then(data => setFundContributions(data || []))
+        .catch(() => setFundContributions([]));
     }
   }, [status, fetchMatches, fetchPendingApprovals]);
 
@@ -108,9 +118,7 @@ export default function DashboardPage() {
     );
   }
   
-  // FIX: Add a guard clause to ensure session is not null.
-  // This satisfies TypeScript for the rest of the component.
-  if (!session) {
+  if (!session || !currentUser) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-slate-500">Authenticating...</p>
@@ -120,6 +128,13 @@ export default function DashboardPage() {
 
   const upcoming = matches.filter(m => m.status === 'pending' || m.status === 'accepted');
   const completed = matches.filter(m => m.status === 'completed' || m.status === 'declined');
+
+  const userFundTotal = fundContributions.reduce((sum, c) => {
+    const userInContribution = c.userIds.some((u: any) => u._id === currentUser.id);
+    return userInContribution ? sum + c.amountPerPerson : sum;
+  }, 0);
+
+  const netBalance = (currentUser.outstandingBalance || 0) - userFundTotal;
 
   const buttonBaseStyle = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors shadow-sm px-4 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2";
 
@@ -183,33 +198,41 @@ export default function DashboardPage() {
           )}
 
           {currentUser && currentUser.role === 'user' && (
-            <div className="bg-white shadow rounded-lg p-4 mb-6 flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="bg-green-500 rounded-full p-3">
-                  <DollarSign className="h-6 w-6 text-white" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white shadow-lg rounded-xl p-6 border border-slate-200/80">
+                <div className="flex items-center gap-4">
+                  <div className="bg-gradient-to-br from-green-400 to-cyan-500 rounded-full p-3 shadow-md">
+                    <DollarSign className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-700">Net Balance</h3>
+                    <p className={`text-3xl font-bold ${netBalance < 0 ? 'text-green-600' : 'text-red-600'}`}>{formatToINR(netBalance)}</p>
+                  </div>
                 </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold">Your Balance</h3>
-                  <p className="text-3xl font-bold">{formatToINR(currentUser.outstandingBalance)}</p>
-                </div>
-                <button
-                  className="ml-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-sm font-semibold shadow transition-colors"
-                  onClick={() => toast.success('Marked as paid!')}
-                >
-                  Paid
-                </button>
               </div>
-              <div className="flex flex-row items-center ml-6 gap-4">
-                <div className="flex flex-col items-center">
-                  <span className="text-sm text-slate-500 mb-1">Shuttles Left</span>
-                  <span className="text-2xl font-bold text-cyan-600 flex items-center gap-1">
-                    <Feather className="w-6 h-6 text-cyan-500" />
-                    {totalShuttles !== null ? totalShuttles : '--'}
-                  </span>
+              <div className="bg-white shadow-lg rounded-xl p-6 border border-slate-200/80">
+                <div className="flex items-center gap-4">
+                  <div className="bg-gradient-to-br from-sky-400 to-blue-500 rounded-full p-3 shadow-md">
+                    <Feather className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-700">Shuttles in Stock</h3>
+                    <p className="text-3xl font-bold text-slate-800">{totalShuttles ?? 'N/A'}</p>
+                    {purchases.length > 0 && (
+                      <p className="text-sm text-slate-500">Latest: {purchases[0].companyName}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           )}
+
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Match Schedule</h2>
+              <p className="text-slate-500 mt-1">View and manage your upcoming and completed matches.</p>
+            </div>
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div className="flex-1">
