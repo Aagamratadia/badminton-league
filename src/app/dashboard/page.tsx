@@ -13,6 +13,39 @@ import SignOutButton from '../../components/SignOutButton';
 
 export default function DashboardPage() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [specialOccasions, setSpecialOccasions] = useState<{type: 'birthday' | 'anniversary', user: any}[]>([]);
+
+  // Fetch all users for birthday/anniversary notifications
+  useEffect(() => {
+    fetch('/api/users/list')
+      .then(res => res.json())
+      .then(users => setAllUsers(users || []))
+      .catch(() => setAllUsers([]));
+  }, []);
+
+  // Check for today's birthday/anniversary
+  useEffect(() => {
+    const today = new Date('2025-08-03'); // Use system-provided date
+    const month = today.getMonth() + 1; // 1-indexed
+    const day = today.getDate();
+    const occasions: {type: 'birthday' | 'anniversary', user: any}[] = [];
+    allUsers.forEach(user => {
+      if (user.dob) {
+        const d = new Date(user.dob);
+        if ((d.getMonth() + 1) === month && d.getDate() === day) {
+          occasions.push({ type: 'birthday', user });
+        }
+      }
+      if (user.anniversary) {
+        const a = new Date(user.anniversary);
+        if ((a.getMonth() + 1) === month && a.getDate() === day) {
+          occasions.push({ type: 'anniversary', user });
+        }
+      }
+    });
+    setSpecialOccasions(occasions);
+  }, [allUsers]);
   const router = useRouter();
   const { data: session, status } = useSession();
   const [matches, setMatches] = useState<any[]>([]);
@@ -129,8 +162,9 @@ export default function DashboardPage() {
   const upcoming = matches.filter(m => m.status === 'pending' || m.status === 'accepted');
   const completed = matches.filter(m => m.status === 'completed' || m.status === 'declined');
 
+  // Match inventory logic: use String() for robust ID comparison
   const userFundTotal = fundContributions.reduce((sum, c) => {
-    const userInContribution = c.userIds.some((u: any) => u._id === currentUser.id);
+    const userInContribution = c.userIds.some((u: any) => String(u._id) === String(currentUser.id));
     return userInContribution ? sum + c.amountPerPerson : sum;
   }, 0);
 
@@ -141,6 +175,20 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-4xl">
+        {specialOccasions.length > 0 && (
+          <div className="mb-6">
+            {specialOccasions.map(({ type, user }, idx) => (
+              <div key={user._id || user.email || idx} className={`flex items-center gap-3 p-4 rounded-xl shadow border-l-4 ${type === 'birthday' ? 'border-pink-400 bg-pink-50' : 'border-yellow-400 bg-yellow-50'} mb-2`}>
+                <span className="text-2xl">
+                  {type === 'birthday' ? '🎂' : '💍'}
+                </span>
+                <span className="text-lg font-medium text-slate-700">
+                  Wish {user.name} a Happy {type === 'birthday' ? 'Birthday' : 'Anniversary'}!
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">My Dashboard</h1>
@@ -198,18 +246,20 @@ export default function DashboardPage() {
           )}
 
           {currentUser && currentUser.role === 'user' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Net Balance Card */}
               <div className="bg-white shadow-lg rounded-xl p-6 border border-slate-200/80">
                 <div className="flex items-center gap-4">
                   <div className="bg-gradient-to-br from-green-400 to-cyan-500 rounded-full p-3 shadow-md">
                     <DollarSign className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-700">Net Balance</h3>
+                    <h3 className="text-lg font-semibold text-slate-700">Net Balance (as in Inventory)</h3>
                     <p className={`text-3xl font-bold ${netBalance < 0 ? 'text-green-600' : 'text-red-600'}`}>{formatToINR(netBalance)}</p>
                   </div>
                 </div>
               </div>
+              {/* Shuttles in Stock Card */}
               <div className="bg-white shadow-lg rounded-xl p-6 border border-slate-200/80">
                 <div className="flex items-center gap-4">
                   <div className="bg-gradient-to-br from-sky-400 to-blue-500 rounded-full p-3 shadow-md">
@@ -224,15 +274,25 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
+              {/* Net Amount (League) Card */}
+              <div className="bg-white shadow-lg rounded-xl p-6 border border-slate-200/80">
+                <div className="flex items-center gap-4">
+                  <div className="bg-gradient-to-br from-red-400 to-pink-500 rounded-full p-3 shadow-md">
+                    <DollarSign className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-700">Net Amount (League)</h3>
+                    <p className="text-3xl font-bold text-red-600">{
+                      formatToINR(
+                        fundContributions.reduce((sum, c) => sum + c.totalAmount, 0) -
+                        purchases.reduce((sum, p) => sum + p.totalPrice, 0)
+                      )
+                    }</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
-
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Match Schedule</h2>
-              <p className="text-slate-500 mt-1">View and manage your upcoming and completed matches.</p>
-            </div>
-          </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div className="flex-1">

@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   await dbConnect();
 
   try {
-    const users = await User.find({}).select('name email role');
+    const users = await User.find({}).select('name email role dob anniversary');
     return NextResponse.json(users, { status: 200 });
   } catch (error) {
     console.error('Error fetching users:', error);

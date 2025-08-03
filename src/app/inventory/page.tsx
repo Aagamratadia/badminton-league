@@ -489,7 +489,7 @@ export default function InventoryPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl md:text-4xl font-bold text-slate-800">Inventory</h1>
           <div className="flex items-center">
-            <button
+            {/* <button
               className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded flex items-center disabled:opacity-60"
               onClick={() => fetchData()}
               disabled={loading}
@@ -506,7 +506,7 @@ export default function InventoryPage() {
                 </svg>
               )}
               Refresh
-            </button>
+            </button> */}
             <button
               className="ml-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded flex items-center disabled:opacity-60"
               onClick={async () => {
