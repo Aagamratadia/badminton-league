@@ -10,17 +10,21 @@ export async function POST(request: Request) {
   try {
     const { companyName, quantity, totalPrice, selectedUserIds } = await request.json();
 
-    if (!companyName || !quantity || !totalPrice || !selectedUserIds || selectedUserIds.length === 0) {
+    if (!companyName || !quantity || !totalPrice) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
-    const costPerPlayer = totalPrice / selectedUserIds.length;
+    const userIds: string[] = Array.isArray(selectedUserIds) ? selectedUserIds : [];
+    const hasSplit = userIds.length > 0;
+    const costPerPlayer = hasSplit ? totalPrice / userIds.length : totalPrice;
 
     // 1. Update user balances
-    await User.updateMany(
-      { _id: { $in: selectedUserIds } },
-      { $inc: { outstandingBalance: costPerPlayer } }
-    );
+    if (hasSplit) {
+      await User.updateMany(
+        { _id: { $in: userIds } },
+        { $inc: { outstandingBalance: costPerPlayer } }
+      );
+    }
 
     // 2. Create a new purchase record
     await Purchase.create([
@@ -29,7 +33,7 @@ export async function POST(request: Request) {
         quantity,
         totalPrice,
         costPerPlayer,
-        splitAmong: selectedUserIds,
+        splitAmong: hasSplit ? userIds : [],
       },
     ]);
 

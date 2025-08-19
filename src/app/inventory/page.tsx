@@ -169,6 +169,12 @@ export default function InventoryPage() {
     const totalPrice = Number(formData.get('totalPrice'));
 
     try {
+      // Basic validation
+      if (!companyName || !quantity || quantity < 1 || totalPrice == null || totalPrice < 0) {
+        setToastMessage('Please fill all fields with valid values.');
+        setIsSubmittingStock(false);
+        return;
+      }
       const res = await fetch('/api/inventory/stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -600,13 +606,13 @@ export default function InventoryPage() {
           {/* Total Funds Raised Card */}
           <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/60">
             <h2 className="text-lg font-medium text-slate-500">Total Funds Raised</h2>
-            <p className="text-3xl font-bold text-green-600 mt-2">{formatToINR(fundContributions.reduce((sum, c) => sum + c.totalAmount, 0))}</p>
+            <p className="text-3xl font-bold text-red-600 mt-2">{formatToINR(fundContributions.reduce((sum, c) => sum + c.totalAmount, 0))}</p>
           </div>
 
           {/* Net Amount Card */}
           <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/60">
             <h2 className="text-lg font-medium text-slate-500">Net Amount</h2>
-            <p className="text-3xl font-bold text-red-600 mt-2">{formatToINR(fundContributions.reduce((sum, c) => sum + c.totalAmount, 0) - purchases.reduce((sum, p) => sum + p.totalPrice, 0))}</p>
+            <p className="text-3xl font-bold text-green-600 mt-2">{formatToINR(fundContributions.reduce((sum, c) => sum + c.totalAmount, 0) - purchases.reduce((sum, p) => sum + p.totalPrice, 0))}</p>
           </div>
         </div>
 
