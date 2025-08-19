@@ -430,6 +430,10 @@ export default function InventoryPage() {
     return <div className="min-h-screen bg-sky-50/50 flex items-center justify-center"><p>Loading...</p></div>;
   }
 
+  const totalPurchases = purchases.reduce((sum, p) => sum + p.totalPrice, 0);
+  const totalFunds = fundContributions.reduce((sum, c) => sum + c.totalAmount, 0);
+  const netAmount = totalPurchases - totalFunds;
+
   return (
     <div className="min-h-screen bg-sky-50/50">
       <div className="container mx-auto p-4 md:p-6 lg:p-8">
@@ -539,50 +543,6 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <Modal isOpen={isEditModalOpen} onClose={closeModal} title="Edit Purchase">
-          {editingPurchase && (
-            <form onSubmit={handleUpdatePurchase} className="space-y-4">
-              <div>
-                <label htmlFor="companyName" className="text-sm font-medium text-slate-600">Company Name</label>
-                <input type="text" id="companyName" name="companyName" defaultValue={editingPurchase.companyName} required className="mt-1 block w-full input-styled" />
-              </div>
-              <div>
-                <label htmlFor="editQuantity" className="text-sm font-medium text-slate-600">Quantity</label>
-                <input type="number" id="editQuantity" name="editQuantity" defaultValue={editingPurchase.quantity} required className="mt-1 block w-full input-styled" />
-              </div>
-              <div>
-                <label htmlFor="editTotalPrice" className="text-sm font-medium text-slate-600">Total Price</label>
-                <input type="number" id="editTotalPrice" name="editTotalPrice" step="0.01" defaultValue={editingPurchase.totalPrice} required className="mt-1 block w-full input-styled" />
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-slate-600 mb-2">Split cost among:</h4>
-                <div className="space-y-1 max-h-36 overflow-y-auto pr-2 border rounded-md p-2">
-                  {users.map(user => (
-                    <div key={user.id} onClick={() => handleUserSelection(String(user.id))} className={`flex items-center p-2 rounded-lg cursor-pointer transition-colors duration-200 ${selectedUsers[String(user.id)] ? 'bg-sky-100' : 'hover:bg-slate-100'}`}>
-                      <input type="checkbox" id={`edit-user-${user.id}`} checked={!!selectedUsers[String(user.id)]} readOnly className="h-4 w-4 text-sky-600 border-slate-300 rounded focus:ring-sky-500" />
-                      <label htmlFor={`edit-user-${user.id}`} className="ml-3 text-sm font-medium text-slate-700 cursor-pointer">{user.name}</label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="flex justify-end space-x-3 pt-4">
-                <button type="button" onClick={closeModal} className="btn-secondary">Cancel</button>
-                <button type="submit" className="btn-primary">Save Changes</button>
-              </div>
-            </form>
-          )}
-        </Modal>
-
-        <Modal isOpen={isDeleteConfirmOpen} onClose={closeModal} title="Confirm Deletion">
-          <p className="text-sm text-slate-600">Are you sure you want to delete this purchase record? This will adjust player balances accordingly and cannot be undone.</p>
-          <div className="flex justify-end space-x-3 pt-6">
-            <button type="button" onClick={closeModal} className="btn-secondary" disabled={isDeleting}>Cancel</button>
-            <button onClick={handleDeletePurchase} className="btn-danger" disabled={isDeleting}>
-              {isDeleting ? 'Deleting...' : 'Delete Purchase'}
-            </button>
-          </div>
-        </Modal>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Current Stock Card */}
           <div className="bg-gradient-to-br from-sky-500 to-cyan-500 text-white p-6 rounded-2xl shadow-lg shadow-sky-200 flex flex-col justify-between">
@@ -600,19 +560,19 @@ export default function InventoryPage() {
           {/* Total Purchases Card */}
           <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/60">
             <h2 className="text-lg font-medium text-slate-500">Total Purchases</h2>
-            <p className="text-3xl font-bold text-slate-800 mt-2">{formatToINR(purchases.reduce((sum, p) => sum + p.totalPrice, 0))}</p>
+            <p className="text-3xl font-bold text-slate-800 mt-2">{formatToINR(totalPurchases)}</p>
           </div>
 
           {/* Total Funds Raised Card */}
           <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/60">
             <h2 className="text-lg font-medium text-slate-500">Total Funds Raised</h2>
-            <p className="text-3xl font-bold text-red-600 mt-2">{formatToINR(fundContributions.reduce((sum, c) => sum + c.totalAmount, 0))}</p>
+            <p className="text-3xl font-bold text-red-600 mt-2">{formatToINR(totalFunds)}</p>
           </div>
 
           {/* Net Amount Card */}
           <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/60">
             <h2 className="text-lg font-medium text-slate-500">Net Amount</h2>
-            <p className="text-3xl font-bold text-green-600 mt-2">{formatToINR(fundContributions.reduce((sum, c) => sum + c.totalAmount, 0) - purchases.reduce((sum, p) => sum + p.totalPrice, 0))}</p>
+            <p className={`text-3xl font-bold mt-2 ${netAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatToINR(netAmount)}</p>
           </div>
         </div>
 
@@ -774,31 +734,32 @@ export default function InventoryPage() {
             </div>
             <div className="overflow-x-auto">
               {activeTab === 'balances' && (
-  <table className="min-w-full text-sm border">
-    <thead>
-      <tr className="bg-sky-50">
-        <th className="table-header">Player</th>
-        <th className="table-header text-right">Fund Raised</th>
-      </tr>
-    </thead>
-    <tbody className="bg-white divide-y divide-slate-200">
-      {users.filter(u => u.role !== 'admin').map(user => {
-        // Sum all fund contributions for this user
-        const fundTotal = fundContributions.reduce((sum, c) => {
-          const userInContribution = c.userIds.some((u: any) => u._id === user.id);
-          return userInContribution ? sum + c.amountPerPerson : sum;
-        }, 0);
-        const netBalance = (user.outstandingBalance || 0) - fundTotal;
-        return (
-          <tr key={user.id} className="hover:bg-sky-50/70 transition-colors">
-            <td className="table-cell font-medium text-slate-800">{user.name}</td>
-            <td className="table-cell text-right font-semibold text-green-700">{formatToINR(fundTotal)}</td>
-          </tr>
-        );
-      })}
-    </tbody>
-  </table>
-)}
+                <table className="min-w-full text-sm border">
+                  <thead>
+                    <tr className="bg-sky-50">
+                      <th className="table-header">Player</th>
+                      <th className="table-header text-right">Fund Raised</th>
+                      <th className="table-header text-right">Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {users.filter(u => u.role !== 'admin').map(user => {
+                      // Sum all fund contributions for this user
+                      const fundTotal = fundContributions.reduce((sum, c) => {
+                        const userInContribution = c.userIds.some((u: any) => u._id === user.id);
+                        return userInContribution ? sum + c.amountPerPerson : sum;
+                      }, 0);
+                      return (
+                        <tr key={user.id} className="hover:bg-sky-50/70 transition-colors">
+                          <td className="table-cell font-medium text-slate-800">{user.name}</td>
+                          <td className="table-cell text-right font-semibold text-green-700">{formatToINR(fundTotal)}</td>
+                          <td className="table-cell text-right font-semibold text-slate-800">{formatToINR(user.outstandingBalance || 0)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
               {activeTab === 'history' && (
                 <table className="min-w-full">
                   <thead className="bg-sky-50">

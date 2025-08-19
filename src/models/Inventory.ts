@@ -37,10 +37,12 @@ export const UsageLog: Model<IUsageLog> = models.UsageLog || mongoose.model<IUsa
 // 3. Inventory Schema (Singleton)
 export interface IInventory extends Document {
   totalShuttles: number;
+  lastResetAt?: Date;
 }
 
 const InventorySchema: Schema<IInventory> = new Schema({
   totalShuttles: { type: Number, required: true, default: 0 },
+  lastResetAt: { type: Date },
 });
 
 export const Inventory: Model<IInventory> = models.Inventory || mongoose.model<IInventory>('Inventory', InventorySchema);

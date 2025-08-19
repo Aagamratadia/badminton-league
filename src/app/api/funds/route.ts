@@ -1,13 +1,26 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import FundContribution from '@/models/FundContribution';
+import { Inventory } from '@/models/Inventory';
 import User from '@/models/User';
 
 // GET all fund contributions
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await dbConnect();
-    const contributions = await FundContribution.find({}).sort({ date: -1 }).populate('userIds', 'name');
+    const url = new URL(request.url);
+    const sinceReset = url.searchParams.get('sinceReset') === '1';
+
+    let query: Record<string, any> = {};
+    if (sinceReset) {
+      const inventory = await Inventory.findOne({});
+      const since = inventory?.lastResetAt;
+      if (since) {
+        query = { date: { $gte: since } };
+      }
+    }
+
+    const contributions = await FundContribution.find(query).sort({ date: -1 }).populate('userIds', 'name');
     return NextResponse.json(contributions);
   } catch (error) {
     console.error('Failed to fetch fund contributions:', error);
