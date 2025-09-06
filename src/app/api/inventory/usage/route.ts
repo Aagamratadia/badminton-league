@@ -44,3 +44,94 @@ export async function GET() {
     return NextResponse.json({ message: 'Failed to fetch usage logs' }, { status: 500 });
   }
 }
+
+export async function PUT(request: Request) {
+  await dbConnect();
+  
+  try {
+    const { id, quantityUsed } = await request.json();
+    
+    if (!id || !quantityUsed) {
+      return NextResponse.json({ message: 'Missing required fields: id and quantityUsed' }, { status: 400 });
+    }
+    
+    // Find the log to get the original quantity
+    const originalLog = await UsageLog.findById(id);
+    if (!originalLog) {
+      return NextResponse.json({ message: 'Usage log not found' }, { status: 404 });
+    }
+    
+    const quantityDifference = quantityUsed - originalLog.quantityUsed;
+    
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+      // Update the log
+      await UsageLog.findByIdAndUpdate(id, { quantityUsed }, { session });
+      
+      // Update the inventory total shuttles
+      await Inventory.findOneAndUpdate(
+        {}, 
+        { $inc: { totalShuttles: -quantityDifference } }, 
+        { session }
+      );
+      
+      await session.commitTransaction();
+      return NextResponse.json({ message: 'Usage log updated successfully' });
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  } catch (error) {
+    console.error('Failed to update usage log:', error);
+    return NextResponse.json({ message: 'Failed to update usage log' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  await dbConnect();
+  
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json({ message: 'Missing required parameter: id' }, { status: 400 });
+    }
+    
+    // Find the log to get the quantity
+    const log = await UsageLog.findById(id);
+    if (!log) {
+      return NextResponse.json({ message: 'Usage log not found' }, { status: 404 });
+    }
+    
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+      // Delete the log
+      await UsageLog.findByIdAndDelete(id, { session });
+      
+      // Update the inventory total shuttles (add back the deleted quantity)
+      await Inventory.findOneAndUpdate(
+        {}, 
+        { $inc: { totalShuttles: log.quantityUsed } }, 
+        { session }
+      );
+      
+      await session.commitTransaction();
+      return NextResponse.json({ message: 'Usage log deleted successfully' });
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  } catch (error) {
+    console.error('Failed to delete usage log:', error);
+    return NextResponse.json({ message: 'Failed to delete usage log' }, { status: 500 });
+  }
+}

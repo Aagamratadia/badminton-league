@@ -53,9 +53,17 @@ export default function InventoryPage() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [purchaseToDelete, setPurchaseToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Usage log edit/delete states
+  const [isEditLogModalOpen, setIsEditLogModalOpen] = useState(false);
+  const [editingLog, setEditingLog] = useState<{ _id: string; quantityUsed: number } | null>(null);
+  const [isDeleteLogConfirmOpen, setIsDeleteLogConfirmOpen] = useState(false);
+  const [logToDelete, setLogToDelete] = useState<string | null>(null);
+  const [isDeletingLog, setIsDeletingLog] = useState(false);
+  const [isUpdatingLog, setIsUpdatingLog] = useState(false);
   const [activeTab, setActiveTab] = useState('balances');
   const [confirmingPayments, setConfirmingPayments] = useState<Record<string, boolean>>({});
-  const [usageLogs, setUsageLogs] = useState<{ usageDate: string; quantityUsed: number }[]>([]);
+  const [usageLogs, setUsageLogs] = useState<{ _id: string; usageDate: string; quantityUsed: number }[]>([]);
   // Fund Raiser state
   const [fundAmountPerPerson, setFundAmountPerPerson] = useState(0);
   const [fundNumPeople, setFundNumPeople] = useState(1);
@@ -295,6 +303,87 @@ export default function InventoryPage() {
       setIsDeleting(false);
     }
   };
+  
+  // Usage log handlers
+  const handleEditLogClick = (log: { _id: string; quantityUsed: number }) => {
+    setEditingLog(log);
+    setIsEditLogModalOpen(true);
+  };
+  
+  const handleDeleteLogClick = (logId: string) => {
+    setLogToDelete(logId);
+    setIsDeleteLogConfirmOpen(true);
+  };
+  
+  const handleUpdateLog = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingLog) {
+      setToastMessage('Error: No log selected for editing!');
+      return;
+    }
+    
+    setIsUpdatingLog(true);
+    const formData = new FormData(event.currentTarget);
+    const quantityUsed = Number(formData.get('editQuantityUsed'));
+    
+    if (!quantityUsed || quantityUsed < 1) {
+      setToastMessage('Please enter a valid quantity.');
+      setIsUpdatingLog(false);
+      return;
+    }
+    
+    try {
+      const res = await fetch('/api/inventory/usage', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingLog._id, quantityUsed }),
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to update usage log');
+      }
+      
+      setToastMessage('Usage log updated successfully!');
+      closeModal();
+      await fetchData(false);
+      await fetchUsageLogs();
+    } catch (error) {
+      console.error('Update error:', error);
+      setToastMessage(`Failed to update usage log: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsUpdatingLog(false);
+    }
+  };
+  
+  const handleDeleteLog = async () => {
+    if (!logToDelete) {
+      setToastMessage('Error: No log selected for deletion!');
+      return;
+    }
+    
+    setIsDeletingLog(true);
+    try {
+      const res = await fetch(`/api/inventory/usage?id=${logToDelete}`, {
+        method: 'DELETE',
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to delete usage log');
+      }
+      
+      setToastMessage('Usage log deleted successfully!');
+      closeModal();
+      await fetchData(false);
+      await fetchUsageLogs();
+    } catch (error) {
+      console.error('Delete error:', error);
+      setToastMessage(`Failed to delete usage log: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsDeletingLog(false);
+    }
+  };
 
   const handleUserSelection = (userId: string) => {
     setSelectedUsers(prev => ({ ...prev, [userId]: !prev[userId] }));
@@ -417,6 +506,11 @@ export default function InventoryPage() {
     // Reset form fields
     setFundAmountPerPerson(0);
     setFundSelectedUserIds([]);
+    // Close usage log modals
+    setIsEditLogModalOpen(false);
+    setIsDeleteLogConfirmOpen(false);
+    setEditingLog(null);
+    setLogToDelete(null);
   }
 
   useEffect(() => {
@@ -432,7 +526,7 @@ export default function InventoryPage() {
 
   const totalPurchases = purchases.reduce((sum, p) => sum + p.totalPrice, 0);
   const totalFunds = fundContributions.reduce((sum, c) => sum + c.totalAmount, 0);
-  const netAmount = totalPurchases - totalFunds;
+  const netAmount = totalFunds - totalPurchases; // Reversed the order to make net amount positive when funds > purchases
 
   return (
     <div className="min-h-screen bg-sky-50/50">
@@ -445,6 +539,43 @@ export default function InventoryPage() {
             <button onClick={closeModal} className="px-4 py-2 rounded-md text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">Cancel</button>
             <button onClick={handleDeleteFundContribution} disabled={isDeletingFund} className="px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 transition-colors">
               {isDeletingFund ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        </Modal>
+        
+        {/* Usage Log Edit Modal */}
+        <Modal isOpen={isEditLogModalOpen} onClose={closeModal} title="Edit Usage Log">
+          <form onSubmit={handleUpdateLog}>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="editQuantityUsed" className="block text-sm font-medium text-slate-700">Quantity Used</label>
+                <input
+                  type="number"
+                  id="editQuantityUsed"
+                  name="editQuantityUsed"
+                  defaultValue={editingLog?.quantityUsed}
+                  min="1"
+                  className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  required
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">Cancel</button>
+              <button type="submit" disabled={isUpdatingLog} className="px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 transition-colors">
+                {isUpdatingLog ? 'Updating...' : 'Update Log'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+        
+        {/* Usage Log Delete Confirmation Modal */}
+        <Modal isOpen={isDeleteLogConfirmOpen} onClose={closeModal} title="Confirm Deletion">
+          <p className="text-slate-600">Are you sure you want to delete this usage log? This action cannot be undone.</p>
+          <div className="mt-6 flex justify-end gap-3">
+            <button onClick={closeModal} className="px-4 py-2 rounded-md text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">Cancel</button>
+            <button onClick={handleDeleteLog} disabled={isDeletingLog} className="px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 transition-colors">
+              {isDeletingLog ? 'Deleting...' : 'Delete'}
             </button>
           </div>
         </Modal>
@@ -560,13 +691,13 @@ export default function InventoryPage() {
           {/* Total Purchases Card */}
           <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/60">
             <h2 className="text-lg font-medium text-slate-500">Total Purchases</h2>
-            <p className="text-3xl font-bold text-slate-800 mt-2">{formatToINR(totalPurchases)}</p>
+            <p className="text-3xl font-bold text-red-600 mt-2">{formatToINR(totalPurchases)}</p>
           </div>
 
           {/* Total Funds Raised Card */}
           <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/60">
             <h2 className="text-lg font-medium text-slate-500">Total Funds Raised</h2>
-            <p className="text-3xl font-bold text-red-600 mt-2">{formatToINR(totalFunds)}</p>
+            <p className="text-3xl font-bold text-slate-800 mt-2">{formatToINR(totalFunds)}</p>
           </div>
 
           {/* Net Amount Card */}
@@ -703,16 +834,35 @@ export default function InventoryPage() {
                           <tr>
                             <th className="px-4 py-2 text-left font-medium text-slate-600">Date</th>
                             <th className="px-4 py-2 text-left font-medium text-slate-600">Quantity Used</th>
+                            <th className="px-4 py-2 text-right font-medium text-slate-600">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
                           {usageLogs.length === 0 ? (
-                            <tr><td colSpan={2} className="px-4 py-3 text-slate-400 text-center">No usage logs found.</td></tr>
+                            <tr><td colSpan={3} className="px-4 py-3 text-slate-400 text-center">No usage logs found.</td></tr>
                           ) : (
                             usageLogs.map((log, idx) => (
                               <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
                                 <td className="px-4 py-2">{new Date(log.usageDate).toLocaleString()}</td>
                                 <td className="px-4 py-2">{log.quantityUsed}</td>
+                                <td className="px-4 py-2 text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    <button 
+                                      onClick={() => handleEditLogClick(log)} 
+                                      className="p-1 text-slate-500 hover:text-blue-600 transition-colors"
+                                      title="Edit log"
+                                    >
+                                      <PencilIcon className="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeleteLogClick(log._id)} 
+                                      className="p-1 text-slate-500 hover:text-red-600 transition-colors"
+                                      title="Delete log"
+                                    >
+                                      <TrashIcon className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
                               </tr>
                             ))
                           )}
